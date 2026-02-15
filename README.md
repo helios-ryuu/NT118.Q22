@@ -33,13 +33,13 @@
 | STT |   MSSV   |           Họ và Tên |                                                      Github |                  Email |
 |-----|:--------:|--------------------:|------------------------------------------------------------:|-----------------------:|
 | 1   | 23521367 |         Ngô Tiến Sỹ |               [helios-ryuu](https://github.com/helios-ryuu) | 23521367@gm.uit.edu.vn |
-| 2   | 24520442 |      Phạm Tuấn Hải |               [???](https://github.com/??? ) | 24520442@gm.uit.edu.vn |
+| 2   | 24520442 |      Phạm Tuấn Hải |               [haiphamt](https://github.com/haiphamt) | 24520442@gm.uit.edu.vn |
 | 3   | 23520982 |      Nguyễn Văn Nam |               [Sinister-VN](https://github.com/Sinister-VN) | 23520982@gm.uit.edu.vn |
 
 ---
 
 ## CÀI ĐẶT PHẦN MỀM
-- [X] [Docker và Docker Desktop](https://www.docker.com/)
+- [X] [Docker](https://www.docker.com/)
 - [X] [Git](https://git-scm.com/)
 - [X] [Java Development Kit 25](https://www.oracle.com/java/technologies/downloads/)
 - [X] [Android Studio](https://developer.android.com/studio)
