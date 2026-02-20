@@ -30,11 +30,11 @@
 ---
 
 ## THÀNH VIÊN NHÓM
-| STT |   MSSV   |           Họ và Tên |                                                      Github |                  Email |
-|-----|:--------:|--------------------:|------------------------------------------------------------:|-----------------------:|
-| 1   | 23521367 |         Ngô Tiến Sỹ |               [helios-ryuu](https://github.com/helios-ryuu) | 23521367@gm.uit.edu.vn |
-| 2   | 24520442 |      Phạm Tuấn Hải |               [haiphamt](https://github.com/haiphamt) | 24520442@gm.uit.edu.vn |
-| 3   | 23520982 |      Nguyễn Văn Nam |               [Sinister-VN](https://github.com/Sinister-VN) | 23520982@gm.uit.edu.vn |
+| STT |   MSSV   |      Họ và Tên |                                        Github |                  Email |
+|-----|:--------:|---------------:|----------------------------------------------:|-----------------------:|
+| 1   | 23521367 |    Ngô Tiến Sỹ | [helios-ryuu](https://github.com/helios-ryuu) | 23521367@gm.uit.edu.vn |
+| 2   | 24520442 |  Phạm Tuấn Hải |       [haiphamt](https://github.com/haiphamt) | 24520442@gm.uit.edu.vn |
+| 3   | 23520982 | Nguyễn Văn Nam | [Sinister-VN](https://github.com/Sinister-VN) | 23520982@gm.uit.edu.vn |
 
 ---
 
@@ -49,44 +49,36 @@
 
 1. **Tải JDK phiên bản phù hợp**
    - Truy cập [https://www.oracle.com/java/technologies/downloads/](https://www.oracle.com/java/technologies/downloads/)
-   - Tải **Java Development Kit** về máy - Exe file
+   - Cài đặt **Java Development Kit 25 (JDK 25)** vào máy
 
-2. **Tiến hành cài đặt**
-   - Chạy file **jdk-[version]_windows-x64_bin.exe**
-   - Hoàn tất cài đặt
-
-3. **Kiểm tra cài đặt JDK**
+2. **Kiểm tra cài đặt JDK**
    ```cmd
    java -version
    javac -version
    ```
 
-### Hướng dẫn cài đặt NVM (Node.js 24.13.0)
+### Hướng dẫn cài đặt NVM (Node.js 24.13.1)
 
 1. **Tải NVM**
-   - Truy cập [https://github.com/coreybutler/nvm-windows/releases](https://github.com/coreybutler/nvm-windows/releases)
-   - Tải **nvm-setup.exe**
+   - Truy cập [https://github.com/nvm-sh/nvm](https://github.com/nvm-sh/nvm)
+   - Cài đặt **Node Version Manager (nvm)** vào máy
 
-2. **Chạy trình cài đặt**
-   - Chạy file **nvm-setup.exe**
-   - Hoàn tất cài đặt
-
-3. **Kiểm tra cài đặt NVM**
+2. **Kiểm tra cài đặt NVM**
    ```cmd
    nvm version
    ```
 
-4. **Cài đặt Node.js phiên bản 24.13.0**
+3. **Cài đặt Node.js phiên bản 24 mới nhất (Phiên bản của dự án: 24.13.1)**
    ```cmd
-   nvm install 24.13.0
+   nvm install 24.13.1
    ```
 
-5. **Sử dụng Node.js phiên bản 24.13.0**
+4. **Sử dụng Node.js phiên bản 24.13.1**
    ```cmd
-   nvm use 24.13.0
+   nvm use 24.13.1
    ```
 
-6. **Kiểm tra phiên bản Node.js**
+5. **Kiểm tra phiên bản Node.js**
    ```cmd
    node -v
    npm -v
@@ -98,36 +90,48 @@
 ---
 
 ## KHỞI CHẠY DỰ ÁN
-> ⚠️ **Phải bật Android Studio và khởi động 1 thiết bị Android ảo hoặc kết nối 1 thiết bị Android thật trước khi chạy lệnh**
+> ⚠️ **Phải bật Android Studio, Docker, và khởi động 1 thiết bị Android ảo hoặc kết nối 1 thiết bị Android thật trước khi chạy lệnh**
 
 ### Bước 1: Khởi chạy ứng dụng React Native
 
-1. **Mở terminal tại thư mục `redshark/` và khởi chạy Expo:**
+1. **Mở terminal tại thư mục `ui/redshark/` và khởi chạy Expo:**
    ```cmd
    npm install
-   npx expo start
+   npm run start
    ```
 
 2. **Chạy ứng dụng trên máy ảo:**
    - Nhấn phím **a** để khởi chạy ứng dụng trên máy ảo Android (đã mở sẵn ở Android Studio).
 
-### Bước 2: Khởi chạy backend Java Spring Boot
+### Bước 2: Khởi chạy cơ sở dữ liệu PostgreSQL bằng Docker
 
-1. **Mở terminal tại thư mục `redshark-backend/` và chạy lệnh:**
+1. **Mở terminal tại thư mục gốc của dự án (`NT118.Q22/`) và chạy lệnh:**
    ```cmd
-   .\gradlew.bat bootRun
+   docker compose up -d
+   ```
+   - Lệnh này sẽ khởi động container PostgreSQL chạy nền (detached mode).
+   - Đảm bảo Docker Desktop đang chạy trước khi thực hiện bước này.
+
+### Bước 3: Khởi chạy backend Java Spring Boot (Maven)
+
+1. **Mở terminal tại thư mục `api/redshark/` và chạy lệnh:**
+   ```cmd
+   ./mvnw spring-boot:run
    ```
 
 ---
 
 ## CÔNG NGHỆ SỬ DỤNG
 
-> **Cập nhật:** 10 tháng 2 năm 2026
+> **Cập nhật:** 20 tháng 2 năm 2026
 
 ### Backend
 
-1. **Ngôn ngữ:** [Java 25](https://www.oracle.com/java/technologies/downloads/)
-2. **Framework:** [Spring Boot 4.0.2](https://spring.io/projects/spring-boot)
+1. **Ngôn ngữ:** [Java 25.0.2](https://www.oracle.com/java/technologies/downloads/)
+2. **Framework:** [Spring Boot 4.0.3](https://spring.io/projects/spring-boot)
+   - **Build tool:** [Apache Maven](https://maven.apache.org/) – quản lý dependency và build project thông qua Maven Wrapper (`./mvnw`)
+   - **Group ID:** `com.helios` | **Artifact ID:** `redshark`
+   - **Package gốc:** `com.helios.redshark`
 
 ### Frontend
 
@@ -138,7 +142,7 @@
 
 ### Database
 
-**Hệ quản trị cơ sở dữ liệu:** [PostgreSQL 18.1](https://www.postgresql.org/)
+**Hệ quản trị cơ sở dữ liệu:** [PostgreSQL 18.2](https://www.postgresql.org/)
 
 ### Firebase Services
 
