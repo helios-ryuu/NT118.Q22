@@ -1,1 +1,5 @@
 .env
+.env.local
+.idea/
+CLAUDE.md
+api/redshark/src/main/resources/application-local.properties

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 
-const API_URL = "http://10.0.2.2:8080/api/users";
-// const API_URL = "http://localhost:8080/api/users"; // iOS simulator / web
+const API_URL = "https://redshark-api.helios.id.vn/api/users";
 
 type User = {
   id: number;

@@ -9,10 +9,11 @@
 * [Giới thiệu môn học](#giới-thiệu-môn-học)
 * [Giới thiệu đồ án môn học](#giới-thiệu-đồ-án-môn-học)
 * [Thành viên nhóm](#thành-viên-nhóm)
-* [Cài đặt phần mềm](#cài-đặt-phần-mềm)
-* [Khởi chạy dự án](#khởi-chạy-dự-án)
 * [Công nghệ sử dụng](#công-nghệ-sử-dụng)
 
+> **Hướng dẫn cài đặt và triển khai:** xem [SETUP.md](./SETUP.md)
+
+---
 
 ## GIỚI THIỆU MÔN HỌC
 * **Tên môn học**: Phát triển ứng dụng trên thiết bị di động - Mobile Application Development
@@ -38,169 +39,70 @@
 
 ---
 
-## CÀI ĐẶT PHẦN MỀM
-- [X] [Docker](https://www.docker.com/)
-- [X] [Git](https://git-scm.com/)
-- [X] [Java Development Kit 25](https://www.oracle.com/java/technologies/downloads/)
-- [X] [Android Studio](https://developer.android.com/studio)
-- [X] [NVM (Node Version Manager)](https://github.com/nvm-sh/nvm)
-
-### Hướng dẫn cài đặt JDK
-
-1. **Tải JDK phiên bản phù hợp**
-   - Truy cập [https://www.oracle.com/java/technologies/downloads/](https://www.oracle.com/java/technologies/downloads/)
-   - Cài đặt **Java Development Kit 25 (JDK 25)** vào máy
-
-2. **Kiểm tra cài đặt JDK**
-   ```cmd
-   java -version
-   javac -version
-   ```
-
-### Hướng dẫn cài đặt NVM (Node.js 24.13.1)
-
-1. **Tải NVM**
-   - Truy cập [https://github.com/nvm-sh/nvm](https://github.com/nvm-sh/nvm)
-   - Cài đặt **Node Version Manager (nvm)** vào máy
-
-2. **Kiểm tra cài đặt NVM**
-   ```cmd
-   nvm version
-   ```
-
-3. **Cài đặt Node.js phiên bản 24 mới nhất (Phiên bản của dự án: 24.13.1)**
-   ```cmd
-   nvm install 24.13.1
-   ```
-
-4. **Sử dụng Node.js phiên bản 24.13.1**
-   ```cmd
-   nvm use 24.13.1
-   ```
-
-5. **Kiểm tra phiên bản Node.js**
-   ```cmd
-   node -v
-   npm -v
-   ```
-
-> **Lưu ý:** Nếu gặp lỗi phân quyền, hãy chạy Terminal/Command Prompt với quyền Administrator.
-
-
----
-
-## KHỞI CHẠY DỰ ÁN
-> ⚠️ **Phải bật Android Studio, Docker, và khởi động 1 thiết bị Android ảo hoặc kết nối 1 thiết bị Android thật trước khi chạy lệnh**
-
-### Bước 1: Khởi chạy ứng dụng React Native
-
-1. **Mở terminal tại thư mục `ui/redshark/` và khởi chạy Expo:**
-   ```cmd
-   npm install
-   npm run start
-   ```
-
-2. **Chạy ứng dụng trên máy ảo:**
-   - Nhấn phím **a** để khởi chạy ứng dụng trên máy ảo Android (đã mở sẵn ở Android Studio).
-
-### Bước 2: Khởi chạy cơ sở dữ liệu PostgreSQL bằng Docker
-
-1. **Mở terminal tại thư mục gốc của dự án (`NT118.Q22/`) và chạy lệnh:**
-   ```cmd
-   docker compose up -d
-   ```
-   - Lệnh này sẽ khởi động container PostgreSQL chạy nền (detached mode).
-   - Đảm bảo Docker Desktop đang chạy trước khi thực hiện bước này.
-
-### Bước 3: Khởi chạy backend Java Spring Boot (Maven)
-
-1. **Mở terminal tại thư mục `api/redshark/` và chạy lệnh:**
-   ```cmd
-   ./mvnw spring-boot:run
-   ```
-
----
-
 ## CÔNG NGHỆ SỬ DỤNG
 
-> **Cập nhật:** 20 tháng 2 năm 2026
+> **Cập nhật:** 17 tháng 3 năm 2026
 
 ### Backend
 
-1. **Ngôn ngữ:** [Java 25.0.2](https://www.oracle.com/java/technologies/downloads/)
-2. **Framework:** [Spring Boot 4.0.3](https://spring.io/projects/spring-boot)
-   - **Build tool:** [Apache Maven](https://maven.apache.org/) – quản lý dependency và build project thông qua Maven Wrapper (`./mvnw`)
-   - **Group ID:** `com.helios` | **Artifact ID:** `redshark`
-   - **Package gốc:** `com.helios.redshark`
+| | Công nghệ | Chi tiết |
+|---|---|---|
+| Ngôn ngữ | [Java 25.0.2](https://www.oracle.com/java/technologies/downloads/) | |
+| Framework | [Spring Boot 4.0.3](https://spring.io/projects/spring-boot) | Build tool: Maven Wrapper (`./mvnw`) |
+| Package | `com.helios.redshark` | Group: `com.helios` · Artifact: `redshark` |
 
 ### Frontend
 
-1. **Ngôn ngữ:** [TypeScript](https://www.typescriptlang.org/)
-2. **Framework và công cụ:**
-    * [React Native 0.81.5](https://reactnative.dev/) – Mobile application framework  
-    * [Expo](https://expo.dev/) – Toolchain hỗ trợ phát triển và chạy ứng dụng React Native
+| | Công nghệ | Chi tiết |
+|---|---|---|
+| Ngôn ngữ | [TypeScript](https://www.typescriptlang.org/) | |
+| Framework | [React Native 0.81.5](https://reactnative.dev/) | Mobile application framework |
+| Toolchain | [Expo](https://expo.dev/) | Development & build toolchain |
 
-### Database
+### Database & Storage
 
-**Hệ quản trị cơ sở dữ liệu:** [PostgreSQL 18.2](https://www.postgresql.org/)
+| Dịch vụ | Công nghệ | Endpoint nội bộ |
+|---|---|---|
+| PostgreSQL (RDS) | [LocalStack RDS](https://docs.localstack.cloud/user-guide/aws/rds/) — PostgreSQL 18.2 | `localstack.localstack.svc.cluster.local:4566` |
+| File Storage (S3) | [LocalStack S3](https://docs.localstack.cloud/user-guide/aws/s3/) — bucket `redshark` | `localstack.localstack.svc.cluster.local:4566` |
 
 ### Firebase Services
 
-1. **Authentication:** Sử dụng [Firebase Authentication](https://firebase.google.com/docs/auth) để hỗ trợ đăng nhập người dùng (Email/Password, Google, Apple, v.v.). Firebase đóng vai trò là Identity Provider, backend Spring Boot thực hiện xác thực Firebase ID Token.
+| Dịch vụ | Mục đích |
+|---|---|
+| [Firebase Authentication](https://firebase.google.com/docs/auth) | Identity Provider — đăng nhập Email/Password, Google, Apple. Backend xác thực Firebase ID Token. |
+| [Firebase Cloud Messaging (FCM)](https://firebase.google.com/docs/cloud-messaging) | Push notification từ backend tới mobile. |
 
-2. **Push Notification:** Sử dụng [Firebase Cloud Messaging (FCM)](https://firebase.google.com/docs/cloud-messaging) để gửi thông báo đẩy (push notification) từ backend tới ứng dụng mobile.
+### Deployment
 
-3. **Analytics:** Sử dụng [Firebase Analytics](https://firebase.google.com/docs/analytics) để theo dõi hành vi người dùng, sự kiện trong ứng dụng và phân tích hiệu suất sử dụng.
+| Thành phần | Công nghệ | Chi tiết |
+|---|---|---|
+| Container | [Docker](https://www.docker.com/) | Multi-stage build (`api/Dockerfile`) |
+| Orchestration | [k3s](https://k3s.io/) | Homelab multi-node cluster (3 master + 2 worker) |
+| API deployment | Helm chart | `services/redshark/` — Deployment + ClusterIP Service |
+| Public access | [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) | Không cần static IP hay mở port router |
+| Mobile release | [Google Play Store](https://play.google.com/store/apps) | |
 
-4. **Crash Reporting:** Sử dụng [Firebase Crashlytics](https://firebase.google.com/docs/crashlytics) để theo dõi, ghi nhận và phân tích các lỗi crash xảy ra trên ứng dụng mobile.
+Kiến trúc tunnel:
 
-### Deployment – Nền tảng triển khai
-
-1. **Mobile Application:** Ứng dụng mobile phía người dùng (client) được triển khai trên [Google Play Store](https://play.google.com/store/apps)
-
-2. **Backend API:** Dịch vụ Java Spring Boot API được triển khai lên [Railway](https://railway.app/)
-
-3. **Cơ sở dữ liệu:** Sử dụng [Supabase](https://supabase.com/) (managed database) với PostgreSQL 18.1 instance để lưu trữ dữ liệu người dùng, sản phẩm, giao dịch, v.v.
-
-4. **File Storage:** Sử dụng [Supabase Storage](https://supabase.com/docs/guides/storage) (bucket: `redshark`) để lưu trữ avatar người dùng, video và các file upload khác
-
+```
+Mobile App (React Native)
+        │ HTTPS
+        ▼
+Cloudflare Edge
+        │ Tunnel (outbound từ cluster)
+        ▼
+cloudflared (namespace: cloudflared)
+        │
+        ├─▶ redshark-api.helios.id.vn → Spring Boot Service :8080
+        └─▶ localstack.helios.id.vn  → LocalStack Service :4566
+```
 
 ### CI/CD & DevOps
 
-1. **Containerization:**  
-   Sử dụng [Docker](https://www.docker.com/) để đóng gói backend Spring Boot API dưới dạng container, đảm bảo tính nhất quán giữa môi trường phát triển, kiểm thử và triển khai.
-
-2. **Version Control & CI/CD:**  
-   Sử dụng [GitHub Actions](https://docs.github.com/en/actions) để tự động hóa quy trình:
-   - Build project
-   - Chạy test
-   - Build Docker image
-   - Deploy backend API lên Railway
-
-3. **Testing:**  
-   - **Backend Testing:**  
-     Sử dụng **JUnit 5** và **Spring Boot Test** để kiểm thử unit test và integration test cho các service, controller và repository.
-   - **API Testing:**  
-     Sử dụng test tích hợp trong pipeline CI để đảm bảo các endpoint hoạt động đúng trước khi deploy.
-
-4. **Monitoring & Metrics:**  
-   - Sử dụng **Spring Boot Actuator** để expose health check và metrics.
-   - Sử dụng **Prometheus** để thu thập metrics từ backend API.
-   - Sử dụng **Grafana** để trực quan hóa các chỉ số như:
-     - CPU / Memory usage
-     - Request count
-     - Response time
-     - Error rate
-
-5. **Logging & Error Tracking:**  
-   - **Logging:**  
-     Sử dụng logging framework mặc định của Spring Boot (Logback) để ghi log ứng dụng.
-   - **Error Tracking:**  
-     Tích hợp [Sentry](https://sentry.io/) để theo dõi lỗi runtime, exception và performance issue của backend API cũng như mobile application.
-
-6. **Infrastructure as Code (Optional):**  
-   - Sử dụng [Terraform](https://www.terraform.io/) để mô tả và quản lý hạ tầng (cloud resources, environment variables, service configuration) dưới dạng mã nguồn khi mở rộng hệ thống.
-
-7. **Container Orchestration (Optional):**  
-   - Sử dụng [Kubernetes](https://kubernetes.io/) trong trường hợp hệ thống mở rộng về quy mô, cần auto-scaling, rolling update và quản lý nhiều service backend.
-
+| Thành phần | Công nghệ | Mục đích |
+|---|---|---|
+| CI/CD | [GitHub Actions](https://docs.github.com/en/actions) | Build · Test · Push image · Deploy rolling update |
+| Testing | JUnit 5 + Spring Boot Test | Unit test và integration test |
+| Monitoring | Spring Boot Actuator + Prometheus + [Grafana](https://grafana.com/) | Health check, metrics (CPU/Memory/Requests/Errors) |
+| Logging | Logback → [Alloy](https://grafana.com/docs/alloy/) → [Loki](https://grafana.com/oss/loki/) → Grafana | Cluster-wide log aggregation và error tracking |
