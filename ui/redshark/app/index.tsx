@@ -1,38 +1,15 @@
-import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 
-const API_URL = "https://redshark-api.helios.id.vn/api/users";
-
-type User = {
-  id: number;
-  name: string;
-  age: number;
-};
-
 export default function Index() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setLoading(true);
-    fetch(API_URL)
-      .then((res) => res.json())
-      .then((json: User[]) => setUsers(json))
-      .catch((e) => setError(e.message ?? "Unknown error"))
-      .finally(() => setLoading(false));
-  }, []);
-
   return (
-    <View>
-      <Text>Users from backend:</Text>
-      {loading && <Text>Loading...</Text>}
-      {error && <Text>Error: {error}</Text>}
-      {users.map((u) => (
-        <View key={u.id}>
-          <Text>{u.id}. {u.name}, age {u.age}</Text>
-        </View>
-      ))}
+    <View
+      style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Text>Edit app/index.tsx to edit this screen.</Text>
     </View>
   );
 }

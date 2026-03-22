@@ -41,14 +41,14 @@
 
 ## CÔNG NGHỆ SỬ DỤNG
 
-> **Cập nhật:** 17 tháng 3 năm 2026
+> **Cập nhật:** 22 tháng 3 năm 2026
 
 ### Backend
 
 | | Công nghệ | Chi tiết |
 |---|---|---|
 | Ngôn ngữ | [Java 25.0.2](https://www.oracle.com/java/technologies/downloads/) | |
-| Framework | [Spring Boot 4.0.3](https://spring.io/projects/spring-boot) | Build tool: Maven Wrapper (`./mvnw`) |
+| Framework | [Spring Boot 4.0.4](https://spring.io/projects/spring-boot) | Build tool: Maven Wrapper (`./mvnw`) |
 | Package | `com.helios.redshark` | Group: `com.helios` · Artifact: `redshark` |
 
 ### Frontend
@@ -56,15 +56,16 @@
 | | Công nghệ | Chi tiết |
 |---|---|---|
 | Ngôn ngữ | [TypeScript](https://www.typescriptlang.org/) | |
-| Framework | [React Native 0.81.5](https://reactnative.dev/) | Mobile application framework |
-| Toolchain | [Expo](https://expo.dev/) | Development & build toolchain |
+| Thư viện | [React 19.1](https://react.dev/) | Thư viện giao diện người dùng |
+| Framework | [React Native 0.81.5](https://reactnative.dev/) | Nền tảng phát triển ứng dụng di động |
+| Toolchain | [Expo](https://expo.dev/) | Công cụ phát triển & build |
 
 ### Database & Storage
 
-| Dịch vụ | Công nghệ | Endpoint nội bộ |
+| Dịch vụ | Công nghệ | Chi tiết |
 |---|---|---|
-| PostgreSQL (RDS) | [LocalStack RDS](https://docs.localstack.cloud/user-guide/aws/rds/) — PostgreSQL 18.2 | `localstack.localstack.svc.cluster.local:4566` |
-| File Storage (S3) | [LocalStack S3](https://docs.localstack.cloud/user-guide/aws/s3/) — bucket `redshark` | `localstack.localstack.svc.cluster.local:4566` |
+| PostgreSQL | [Supabase Database](https://supabase.com/docs/guides/database) — PostgreSQL | Cơ sở dữ liệu quan hệ được quản lý bởi Supabase |
+| Lưu trữ tệp | [Supabase Storage](https://supabase.com/docs/guides/storage) | Object storage, bucket `redshark` |
 
 ### Firebase Services
 
@@ -94,8 +95,7 @@ Cloudflare Edge
         ▼
 cloudflared (namespace: cloudflared)
         │
-        ├─▶ redshark-api.helios.id.vn → Spring Boot Service :8080
-        └─▶ localstack.helios.id.vn  → LocalStack Service :4566
+        └─▶ redshark-api.helios.id.vn → Spring Boot Service :8080
 ```
 
 ### CI/CD & DevOps
