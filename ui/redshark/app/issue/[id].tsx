@@ -3,50 +3,30 @@ import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
-import { Button } from "@/components/common/Button";
-import { Avatar } from "@/components/common/Avatar";
+import { Button } from "@/components/Button";
+import { Avatar } from "@/components/Avatar";
 import { priorityLabel, statusLabel } from "@/constants/labels";
 import { api } from "@/services/api";
 import { endpoints } from "@/services/endpoints";
 import { useAuth } from "@/hooks/useAuth";
 import type { Issue } from "@/types/issue";
-import type { Session } from "@/types/workspace";
-import { colors, borderRadius, fonts, fontSize, spacing } from "@/constants/theme";
+import { colors, fonts, text, radius, spacing } from "@/constants/theme";
+const fontSize = text;
+const borderRadius = radius;
 
 export default function IssueDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
   const [issue, setIssue] = useState<Issue | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [hasApplied, setHasApplied] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
-      const [issueResult, sessionResult, appliedResult] = await Promise.allSettled([
-        api.get<Issue>(endpoints.issues.byId(id)),
-        api.get<Session>(endpoints.sessions.byIssue(id)),
-        api.get<{ applied: boolean }>(endpoints.issues.applied(id)),
-      ]);
-
-      if (issueResult.status !== "fulfilled") {
-        throw issueResult.reason;
-      }
-
-      setIssue(issueResult.value);
-
-      if (sessionResult.status === "fulfilled") {
-        setSessionId(sessionResult.value.id);
-      } else {
-        setSessionId(null);
-      }
-
-      if (appliedResult.status === "fulfilled") {
-        setHasApplied(appliedResult.value.applied);
-      }
+      const issueResult = await api.get<Issue>(endpoints.issues.byId(id));
+      setIssue(issueResult);
     } catch (e) {
       console.error("[IssueDetail] load:", e);
     } finally {
@@ -73,18 +53,8 @@ export default function IssueDetailScreen() {
     ]);
   };
 
-  const handleApply = async () => {
-    try {
-      await api.post(endpoints.issues.apply(id as string), {});
-      setHasApplied(true);
-      Alert.alert("Đã ứng cử", "Chủ sở hữu sẽ xem xét và chấp nhận bạn");
-    } catch {
-      Alert.alert("Lỗi", "Không thể ứng cử");
-    }
-  };
-
   const handleClose = () => {
-    Alert.alert("Đóng vấn đề", "Đóng vấn đề này? Workspace vẫn có thể đọc được.", [
+    Alert.alert("Đóng vấn đề", "Đóng vấn đề này?", [
       { text: "Hủy", style: "cancel" },
       {
         text: "Đóng",
@@ -105,7 +75,6 @@ export default function IssueDetailScreen() {
   }
 
   const isOwner = user?.id === issue.authorId;
-  const isMember = !isOwner && sessionId !== null;
   const priorityTone = issue.priority <= 3 ? styles.chipLow : issue.priority <= 7 ? styles.chipMid : styles.chipHigh;
   const isActiveStatus = issue.status === "open" || issue.status === "in_progress";
 
@@ -155,39 +124,17 @@ export default function IssueDetailScreen() {
       {/* === OWNER ACTIONS === */}
       {isOwner && issue.status === "open" && (
         <View style={styles.actionGroup}>
-          {sessionId && <Button title="Vào thảo luận" onPress={() => router.push(`/workspace/${sessionId}`)} />}
           <Button title="Chỉnh sửa" variant="outline" onPress={() => router.push(`/issue/edit?id=${issue.id}`)} />
           <Button title="Xóa" variant="ghost" onPress={handleDelete} />
-          <Button title="Danh sách ứng cử" onPress={() => router.push(`/issue/${issue.id}/applications`)} />
         </View>
       )}
 
-      {isOwner && issue.status === "in_progress" && sessionId && (
+      {isOwner && issue.status === "in_progress" && (
         <View style={styles.actionGroup}>
-          <Button title="Vào thảo luận" onPress={() => router.push(`/workspace/${sessionId}`)} />
           <Button title="Đóng vấn đề" variant="outline" onPress={handleClose} />
         </View>
       )}
 
-      {/* === NON-OWNER ACTIONS === */}
-      {!isOwner && issue.status === "open" && (
-        <View style={styles.actionGroup}>
-          {sessionId && <Button title="Vào thảo luận" variant="outline" onPress={() => router.push(`/workspace/${sessionId}`)} />}
-          <Button
-            title={hasApplied ? "Đã ứng cử" : "Ứng cử"}
-            onPress={hasApplied ? () => {} : handleApply}
-            disabled={hasApplied}
-          />
-        </View>
-      )}
-
-      {!isOwner && issue.status === "in_progress" && isMember && sessionId && (
-        <Button title="Vào thảo luận" onPress={() => router.push(`/workspace/${sessionId}`)} />
-      )}
-
-      {(issue.status === "closed" || issue.status === "cancelled") && sessionId && (
-        <Button title="Xem workspace (chỉ đọc)" onPress={() => router.push(`/workspace/${sessionId}`)} />
-      )}
     </ScrollView>
   );
 }

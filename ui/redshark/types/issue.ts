@@ -18,14 +18,3 @@ export interface Issue {
   expiresAt: string | null;
   durationDays: number | null;
 }
-
-export interface IssueApplication {
-  id: string;
-  issueId: string;
-  applicantId: string;
-  applicantName: string;
-  applicantAvatar: string | null;
-  status: "pending" | "accepted" | "rejected";
-  createdAt: string;
-  workspaceId?: string | null;
-}

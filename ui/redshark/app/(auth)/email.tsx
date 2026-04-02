@@ -1,20 +1,12 @@
-// Man hinh nhap email — kiem tra dinh dang va tai khoan ton tai hay khong
 import { useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
-import { Button } from "@/components/common/Button";
-import { Input } from "@/components/common/Input";
+import { Button } from "@/components/Button";
+import { Input } from "@/components/Input";
 import { useAuth } from "@/hooks/useAuth";
-import { colors, fonts, fontSize, spacing } from "@/constants/theme";
+import { colors, fonts, text, spacing } from "@/constants/theme";
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function EmailScreen() {
   const { checkEmail } = useAuth();
@@ -22,38 +14,17 @@ export default function EmailScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Kiem tra dinh dang email khi nguoi dung nhap
-  const isValid = EMAIL_REGEX.test(email.trim());
+  const valid = EMAIL_RE.test(email.trim());
 
-  const handleChange = (text: string) => {
-    setEmail(text);
-    if (error) {
-      // Xoa loi khi nguoi dung bat dau sua
-      setError(EMAIL_REGEX.test(text.trim()) ? "" : "Email không đúng định dạng");
-    }
-  };
-
-  const handleBlur = () => {
-    if (email.trim() && !isValid) {
-      setError("Email không đúng định dạng");
-    } else {
-      setError("");
-    }
-  };
-
-  const handleContinue = async () => {
-    if (!isValid) return;
-
+  const next = async () => {
+    if (!valid) return;
     setLoading(true);
     try {
       const exists = await checkEmail(email.trim());
-      if (exists) {
-        // Tai khoan da ton tai → man hinh nhap mat khau
-        router.push({ pathname: "/(auth)/password", params: { email: email.trim() } });
-      } else {
-        // Tai khoan moi → man hinh hoan thien ho so
-        router.push({ pathname: "/(auth)/register", params: { email: email.trim() } });
-      }
+      router.push(exists
+        ? { pathname: "/(auth)/password", params: { email: email.trim() } }
+        : { pathname: "/(auth)/register", params: { email: email.trim() } }
+      );
     } catch {
       setError("Không thể kiểm tra email. Vui lòng thử lại.");
     } finally {
@@ -62,70 +33,33 @@ export default function EmailScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <ScrollView
-        contentContainerStyle={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.header}>
-          <Text style={styles.title}>Nhập email của bạn</Text>
-          <Text style={styles.subtitle}>
-            Chúng tôi sẽ kiểm tra xem bạn đã có tài khoản chưa
-          </Text>
+    <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+        <View style={s.header}>
+          <Text style={s.title}>Nhập email của bạn</Text>
+          <Text style={s.subtitle}>Chúng tôi sẽ kiểm tra tài khoản của bạn</Text>
         </View>
-
-        <View style={styles.form}>
-          <Input
-            label="Email"
-            placeholder="email@uit.edu.vn"
-            value={email}
-            onChangeText={handleChange}
-            onBlur={handleBlur}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoFocus
-            error={error}
-          />
-
-          {/* Nut "Tiep tuc" chi hien khi email hop le */}
-          {isValid && (
-            <Button
-              title={loading ? "Đang kiểm tra..." : "Tiếp tục"}
-              onPress={handleContinue}
-              disabled={loading}
-            />
-          )}
-        </View>
+        <Input
+          label="Email"
+          placeholder="email@uit.edu.vn"
+          value={email}
+          onChangeText={t => { setEmail(t); setError(""); }}
+          onBlur={() => { if (email.trim() && !valid) setError("Email không đúng định dạng"); }}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoFocus
+          error={error}
+        />
+        {valid && <Button title={loading ? "Đang kiểm tra..." : "Tiếp tục"} onPress={next} disabled={loading} />}
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
-  container: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: spacing[6],
-  },
-  header: {
-    marginBottom: spacing[7],
-  },
-  title: {
-    fontSize: fontSize.xl,
-    fontFamily: fonts.bold,
-    color: colors.text,
-    marginBottom: spacing[2],
-  },
-  subtitle: {
-    fontSize: fontSize.sm,
-    fontFamily: fonts.regular,
-    color: colors.textSecondary,
-  },
-  form: {
-    gap: spacing[3],
-  },
+  content: { flexGrow: 1, justifyContent: "center", padding: spacing[6] },
+  header: { marginBottom: spacing[6] },
+  title: { fontSize: text.xl, fontFamily: fonts.bold, color: colors.text, marginBottom: spacing[2] },
+  subtitle: { fontSize: text.sm, fontFamily: fonts.regular, color: colors.textSecondary },
 });
