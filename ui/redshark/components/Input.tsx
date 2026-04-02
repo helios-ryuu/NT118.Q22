@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
-import { StyleSheet, Text, TextInput, type TextInputProps, View } from "react-native";
-import { colors, fonts, text, radius, spacing } from "@/constants/theme";
+import { Text, TextInput, type TextInputProps, View } from "react-native";
+import { colors } from "@/constants/theme";
 
 interface Props extends TextInputProps {
   label?: string;
@@ -8,32 +8,17 @@ interface Props extends TextInputProps {
 }
 
 export const Input = forwardRef<TextInput, Props>(({ label, error, style, ...rest }, ref) => (
-  <View style={s.wrap}>
-    {label ? <Text style={s.label}>{label}</Text> : null}
+  <View className="mb-3">
+    {label ? <Text className="text-sm font-lx-md text-foreground mb-1">{label}</Text> : null}
     <TextInput
       ref={ref}
-      style={[s.input, error ? s.err : null, style]}
+      className={`border rounded-xl px-3 py-3 text-base font-lx text-foreground bg-surface ${error ? "border-error" : "border-border"}`}
+      style={style}
       placeholderTextColor={colors.textSecondary}
       {...rest}
     />
-    {error ? <Text style={s.errText}>{error}</Text> : null}
+    {error ? <Text className="text-xs font-lx text-error mt-1">{error}</Text> : null}
   </View>
 ));
 
-const s = StyleSheet.create({
-  wrap: { marginBottom: spacing[3] },
-  label: { fontSize: text.sm, fontFamily: fonts.medium, color: colors.text, marginBottom: spacing[1] },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[3],
-    fontSize: text.md,
-    fontFamily: fonts.regular,
-    color: colors.text,
-    backgroundColor: colors.surface,
-  },
-  err: { borderColor: colors.error },
-  errText: { fontSize: text.xs, fontFamily: fonts.regular, color: colors.error, marginTop: spacing[1] },
-});
+Input.displayName = "Input";

@@ -2,6 +2,7 @@
 package com.helios.redshark.entity;
 
 import jakarta.persistence.*;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -48,7 +49,6 @@ public class IssueEntity {
         if (createdAt == null) createdAt = Instant.now();
     }
 
-    // Getters & setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -64,11 +64,11 @@ public class IssueEntity {
     public int getPriority() { return priority; }
     public void setPriority(int priority) { this.priority = priority; }
 
-    public Integer getDurationDays() { return durationDays; }
-    public void setDurationDays(Integer durationDays) { this.durationDays = durationDays; }
-
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public Integer getDurationDays() { return durationDays; }
+    public void setDurationDays(Integer durationDays) { this.durationDays = durationDays; }
 
     public UserEntity getAuthor() { return author; }
     public void setAuthor(UserEntity author) { this.author = author; }

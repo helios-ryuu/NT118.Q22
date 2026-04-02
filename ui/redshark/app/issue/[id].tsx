@@ -1,167 +1,132 @@
 // Chi tiet van de — phan quyen Owner vs Non-owner
-import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback } from "react";
+import { ActivityIndicator, Alert, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/Button";
 import { Avatar } from "@/components/Avatar";
 import { priorityLabel, statusLabel } from "@/constants/labels";
 import { api } from "@/services/api";
 import { endpoints } from "@/services/endpoints";
+import { queryKeys } from "@/services/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import type { Issue } from "@/types/issue";
-import { colors, fonts, text, radius, spacing } from "@/constants/theme";
-const fontSize = text;
-const borderRadius = radius;
+import { colors } from "@/constants/theme";
 
 export default function IssueDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [issue, setIssue] = useState<Issue | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    if (!id) return;
-    setLoading(true);
-    try {
-      const issueResult = await api.get<Issue>(endpoints.issues.byId(id));
-      setIssue(issueResult);
-    } catch (e) {
-      console.error("[IssueDetail] load:", e);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
+  const issueQuery = useQuery({
+    queryKey: queryKeys.issues.detail(id ?? ""),
+    enabled: !!id,
+    queryFn: () => api.get<Issue>(endpoints.issues.byId(id as string)),
+  });
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load]),
-  );
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete<void>(endpoints.issues.byId(id as string)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.all });
+      router.back();
+    },
+  });
+
+  const closeMutation = useMutation({
+    mutationFn: () => api.put<Issue>(endpoints.issues.status(id as string), { status: "closed" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(id as string) });
+      router.replace("/(tabs)/issues");
+    },
+  });
+
+  useFocusEffect(useCallback(() => { issueQuery.refetch(); }, [issueQuery]));
 
   const handleDelete = () => {
     Alert.alert("Xóa vấn đề", "Bạn chắc chắn muốn xóa vấn đề này?", [
       { text: "Hủy", style: "cancel" },
-      {
-        text: "Xóa", style: "destructive",
-        onPress: async () => {
-          await api.delete(endpoints.issues.byId(id as string));
-          router.back();
-        },
-      },
+      { text: "Xóa", style: "destructive", onPress: async () => {
+        await deleteMutation.mutateAsync();
+      }},
     ]);
   };
 
   const handleClose = () => {
     Alert.alert("Đóng vấn đề", "Đóng vấn đề này?", [
       { text: "Hủy", style: "cancel" },
-      {
-        text: "Đóng",
-        onPress: async () => {
-          await api.put(endpoints.issues.status(id as string), { status: "closed" });
-          router.replace("/(tabs)/issues");
-        },
-      },
+      { text: "Đóng", onPress: async () => {
+        await closeMutation.mutateAsync();
+      }},
     ]);
   };
 
-  if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>;
+  if (issueQuery.isLoading) {
+    return <View className="flex-1 justify-center items-center bg-background"><ActivityIndicator size="large" color={colors.primary} /></View>;
   }
 
+  const issue = issueQuery.data;
   if (!issue) {
-    return <View style={styles.center}><Text style={styles.notFound}>Không tìm thấy vấn đề</Text></View>;
+    return <View className="flex-1 justify-center items-center bg-background"><Text className="text-base font-lx text-muted">Không tìm thấy vấn đề</Text></View>;
   }
 
   const isOwner = user?.id === issue.authorId;
-  const priorityTone = issue.priority <= 3 ? styles.chipLow : issue.priority <= 7 ? styles.chipMid : styles.chipHigh;
+  const priorityChip =
+    issue.priority <= 3 ? "bg-border" : issue.priority <= 7 ? "bg-[#FEF3C7]" : "bg-[#FEE2E2]";
   const isActiveStatus = issue.status === "open" || issue.status === "in_progress";
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      {/* Status chips */}
-      <View style={styles.row}>
-        <View style={[styles.chip, priorityTone]}>
-          <Text style={[styles.chipText, styles.chipTextDark]}>{priorityLabel(issue.priority)}</Text>
+    <ScrollView className="flex-1 bg-background" contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
+      <View className="flex-row gap-2 mb-3">
+        <View className={`px-3 py-1 rounded-full ${priorityChip}`}>
+          <Text className="text-xs font-lx-semi text-foreground">{priorityLabel(issue.priority)}</Text>
         </View>
-        <View style={[styles.chip, isActiveStatus ? styles.chipActive : styles.chipMuted]}>
-          <Text style={[styles.chipText, isActiveStatus ? styles.chipTextLight : styles.chipTextDark]}>
+        <View className={`px-3 py-1 rounded-full ${isActiveStatus ? "bg-primary" : "bg-border"}`}>
+          <Text className={`text-xs font-lx-semi ${isActiveStatus ? "text-white" : "text-foreground"}`}>
             {statusLabel[issue.status]}
           </Text>
         </View>
       </View>
 
-      {/* Title + description */}
-      <Text style={styles.title}>{issue.title}</Text>
-      <Text style={styles.desc}>{issue.description}</Text>
+      <Text className="text-2xl font-lx-bold text-foreground mb-2">{issue.title}</Text>
+      <Text className="text-base font-lx text-muted leading-6 mb-4">{issue.description}</Text>
 
-      {/* Tags */}
       {issue.tags.length > 0 && (
-        <View style={styles.tags}>
-          {issue.tags.map((t) => (
-            <View key={t} style={styles.tag}>
-              <Text style={styles.tagText}>{t}</Text>
+        <View className="flex-row flex-wrap gap-2 mb-4">
+          {issue.tags.map(t => (
+            <View key={t} className="bg-primary-light px-3 py-1 rounded-md">
+              <Text className="text-sm font-lx-md text-primary">{t}</Text>
             </View>
           ))}
         </View>
       )}
 
-      {/* Author */}
-      <View style={styles.authorRow}>
+      <View className="flex-row items-center gap-3 mb-4">
         <Avatar uri={issue.authorAvatar} name={issue.authorName} size={32} />
-        <Text style={styles.authorName}>{issue.authorName}</Text>
+        <Text className="text-base font-lx-md text-foreground">{issue.authorName}</Text>
       </View>
 
-      {/* Time info */}
-      <View style={styles.timeSection}>
-        <Text style={styles.timeLabel}>Tạo lúc: {new Date(issue.createdAt).toLocaleString("vi-VN")}</Text>
+      <View className="mb-5">
+        <Text className="text-sm font-lx text-muted mb-1">Tạo lúc: {new Date(issue.createdAt).toLocaleString("vi-VN")}</Text>
         {issue.expiresAt && (
-          <Text style={styles.timeLabel}>Hết hạn: {new Date(issue.expiresAt).toLocaleString("vi-VN")}</Text>
+          <Text className="text-sm font-lx text-muted mb-1">Hết hạn: {new Date(issue.expiresAt).toLocaleString("vi-VN")}</Text>
         )}
       </View>
 
-      {/* === OWNER ACTIONS === */}
       {isOwner && issue.status === "open" && (
-        <View style={styles.actionGroup}>
+        <View className="gap-3">
           <Button title="Chỉnh sửa" variant="outline" onPress={() => router.push(`/issue/edit?id=${issue.id}`)} />
           <Button title="Xóa" variant="ghost" onPress={handleDelete} />
         </View>
       )}
 
       {isOwner && issue.status === "in_progress" && (
-        <View style={styles.actionGroup}>
+        <View className="gap-3">
           <Button title="Đóng vấn đề" variant="outline" onPress={handleClose} />
         </View>
       )}
-
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing[5], paddingBottom: spacing[8] },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background },
-  notFound: { fontSize: fontSize.md, fontFamily: fonts.regular, color: colors.textSecondary },
-  row: { flexDirection: "row", gap: spacing[2], marginBottom: spacing[3] },
-  chip: { paddingHorizontal: spacing[3], paddingVertical: spacing[1], borderRadius: 999 },
-  chipLow: { backgroundColor: colors.border },
-  chipMid: { backgroundColor: "#FEF3C7" },
-  chipHigh: { backgroundColor: "#FEE2E2" },
-  chipActive: { backgroundColor: colors.primary },
-  chipMuted: { backgroundColor: colors.border },
-  chipText: { fontSize: fontSize.xs, fontFamily: fonts.semiBold },
-  chipTextLight: { color: "#fff" },
-  chipTextDark: { color: colors.text },
-  title: { fontSize: fontSize.xl, fontFamily: fonts.bold, color: colors.text, marginBottom: spacing[2] },
-  desc: { fontSize: fontSize.md, fontFamily: fonts.regular, color: colors.textSecondary, lineHeight: 24, marginBottom: spacing[4] },
-  tags: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2], marginBottom: spacing[4] },
-  tag: { backgroundColor: colors.primaryLight, paddingHorizontal: spacing[3], paddingVertical: spacing[1], borderRadius: borderRadius.sm },
-  tagText: { fontSize: fontSize.sm, fontFamily: fonts.medium, color: colors.primary },
-  authorRow: { flexDirection: "row", alignItems: "center", gap: spacing[3], marginBottom: spacing[4] },
-  authorName: { fontSize: fontSize.md, fontFamily: fonts.medium, color: colors.text },
-  timeSection: { marginBottom: spacing[5] },
-  timeLabel: { fontSize: fontSize.sm, fontFamily: fonts.regular, color: colors.textSecondary, marginBottom: spacing[1] },
-  actionGroup: { gap: spacing[3] },
-});

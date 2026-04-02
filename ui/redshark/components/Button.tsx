@@ -1,5 +1,4 @@
-import { Pressable, StyleSheet, Text } from "react-native";
-import { colors, fonts, text, radius, spacing } from "@/constants/theme";
+import { Pressable, Text } from "react-native";
 
 type Variant = "primary" | "outline" | "ghost";
 
@@ -10,22 +9,26 @@ interface Props {
   disabled?: boolean;
 }
 
+const variantCls: Record<Variant, string> = {
+  primary: "bg-primary",
+  outline: "border border-primary",
+  ghost: "",
+};
+
+const labelCls: Record<Variant, string> = {
+  primary: "text-white",
+  outline: "text-primary",
+  ghost: "text-muted",
+};
+
 export function Button({ title, onPress, variant = "primary", disabled }: Props) {
   return (
-    <Pressable style={[s.base, s[variant], disabled && s.dim]} onPress={onPress} disabled={disabled}>
-      <Text style={[s.label, s[`${variant}Label` as const]]}>{title}</Text>
+    <Pressable
+      className={`py-3 px-4 rounded-xl items-center ${variantCls[variant]} ${disabled ? "opacity-50" : ""}`}
+      onPress={onPress}
+      disabled={disabled}
+    >
+      <Text className={`font-lx-semi text-base ${labelCls[variant]}`}>{title}</Text>
     </Pressable>
   );
 }
-
-const s = StyleSheet.create({
-  base: { paddingVertical: spacing[3], paddingHorizontal: spacing[4], borderRadius: radius.md, alignItems: "center" },
-  primary: { backgroundColor: colors.primary },
-  outline: { borderWidth: 1, borderColor: colors.primary },
-  ghost: {},
-  dim: { opacity: 0.5 },
-  label: { fontFamily: fonts.semiBold, fontSize: text.md },
-  primaryLabel: { color: "#fff" },
-  outlineLabel: { color: colors.primary },
-  ghostLabel: { color: colors.textSecondary },
-});

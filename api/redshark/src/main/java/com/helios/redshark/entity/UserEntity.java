@@ -2,6 +2,7 @@
 package com.helios.redshark.entity;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.time.Instant;
 
@@ -40,7 +41,6 @@ public class UserEntity {
         if (createdAt == null) createdAt = Instant.now();
     }
 
-    // Getters & setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

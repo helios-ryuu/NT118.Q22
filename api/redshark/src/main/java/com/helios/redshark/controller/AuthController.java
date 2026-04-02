@@ -36,19 +36,17 @@ public class AuthController {
 
     @PostMapping("/check-email")
     public Map<String, Boolean> checkEmail(@RequestBody Map<String, String> body) {
-        String email = body.getOrDefault("email", "");
-        return Map.of("exists", users.existsByEmail(email.toLowerCase()));
+        return Map.of("exists", users.existsByEmail(normalizeEmail(body.getOrDefault("email", ""))));
     }
 
     @PostMapping("/login")
     public AuthResponseDto login(@RequestBody Map<String, String> body) {
-        String email = body.getOrDefault("email", "");
-        String password = body.getOrDefault("password", "");
+        String email = normalizeEmail(body.getOrDefault("email", ""));
 
-        UserEntity user = users.findByEmail(email.toLowerCase())
+        UserEntity user = users.findByEmail(email)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email không tồn tại"));
 
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+        if (!passwordEncoder.matches(body.getOrDefault("password", ""), user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sai mật khẩu");
         }
 
@@ -57,20 +55,22 @@ public class AuthController {
 
     @PostMapping("/register")
     public AuthResponseDto register(@RequestBody Map<String, String> body) {
-        String email = body.getOrDefault("email", "").toLowerCase();
+        String email = normalizeEmail(body.getOrDefault("email", ""));
 
         if (users.existsByEmail(email)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email đã tồn tại");
         }
 
         var user = new UserEntity();
-        user.setName(body.getOrDefault("name", "Người dùng mới"));
-        user.setUsername(body.getOrDefault("username", "user" + System.currentTimeMillis()));
+        user.setName(body.getOrDefault("name", "Người dùng mới").trim());
+        user.setUsername(body.getOrDefault("username", "user" + System.currentTimeMillis()).trim());
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(body.getOrDefault("password", "")));
         user.setBio("Sinh viên UIT");
         String birthday = body.get("birthday");
-        if (birthday != null) user.setBirthday(LocalDate.parse(birthday));
+        if (birthday != null && !birthday.isBlank()) {
+            user.setBirthday(LocalDate.parse(birthday));
+        }
         user.setKarmaPoints(0);
         user.setOnline(true);
 
@@ -95,5 +95,9 @@ public class AuthController {
         token.setUserId(userId);
         authTokens.save(token);
         return token.getToken();
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase();
     }
 }

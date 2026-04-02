@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { AuthContext } from "@/contexts/AuthContext";
@@ -9,7 +9,6 @@ import { Input } from "@/components/Input";
 import { api } from "@/services/api";
 import { endpoints } from "@/services/endpoints";
 import type { User } from "@/types/user";
-import { colors, fonts, text, spacing } from "@/constants/theme";
 
 export default function EditProfileScreen() {
   const { user, updateUser } = useContext(AuthContext);
@@ -48,28 +47,18 @@ export default function EditProfileScreen() {
   if (!user) return null;
 
   return (
-    <ScrollView style={s.screen} contentContainerStyle={s.content}>
-      <Pressable style={s.avatarWrap} onPress={pickAvatar}>
+    <ScrollView className="flex-1 bg-background" contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
+      <Pressable className="items-center mb-5 gap-2" onPress={pickAvatar}>
         <Avatar uri={avatarUri} name={name || user.email} size={96} />
-        <Text style={s.changePhoto}>Đổi ảnh</Text>
+        <Text className="text-sm font-lx-md text-primary">Đổi ảnh</Text>
       </Pressable>
       <Input label="Họ tên" value={name} onChangeText={setName} />
-      <Input label="Giới thiệu" value={bio} onChangeText={setBio} multiline numberOfLines={3} style={s.bio} />
-      {error ? <Text style={s.error}>{error}</Text> : null}
-      <View style={s.actions}>
+      <Input label="Giới thiệu" value={bio} onChangeText={setBio} multiline numberOfLines={3} style={{ height: 80, textAlignVertical: "top" }} />
+      {error ? <Text className="text-xs font-lx text-error mb-3">{error}</Text> : null}
+      <View className="gap-3 mt-4">
         <Button title={saving ? "Đang lưu..." : "Lưu thay đổi"} onPress={save} />
         <Button title="Hủy" variant="ghost" onPress={() => router.back()} />
       </View>
     </ScrollView>
   );
 }
-
-const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing[5], paddingBottom: spacing[8] },
-  avatarWrap: { alignItems: "center", marginBottom: spacing[5], gap: spacing[2] },
-  changePhoto: { fontSize: text.sm, fontFamily: fonts.medium, color: colors.primary },
-  bio: { height: 80, textAlignVertical: "top" },
-  error: { fontSize: text.xs, fontFamily: fonts.regular, color: colors.error, marginBottom: spacing[3] },
-  actions: { gap: spacing[3], marginTop: spacing[4] },
-});

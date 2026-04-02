@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -45,16 +46,13 @@ public class UserController {
     @PutMapping("/{id}")
     public UserDto updateUser(@PathVariable String id, @RequestBody Map<String, Object> body,
                               HttpServletRequest request) {
-        UserEntity currentUser = (UserEntity) request.getAttribute("currentUser");
-        if (currentUser == null || !currentUser.getId().equals(id)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
+        UserEntity currentUser = requireOwner(request, id);
         if (body.containsKey("name")) currentUser.setName((String) body.get("name"));
         if (body.containsKey("bio")) currentUser.setBio((String) body.get("bio"));
         if (body.containsKey("avatar")) currentUser.setAvatar((String) body.get("avatar"));
         if (body.containsKey("birthday")) {
-            var bd = body.get("birthday");
-            currentUser.setBirthday(bd != null ? java.time.LocalDate.parse((String) bd) : null);
+            Object bd = body.get("birthday");
+            currentUser.setBirthday(bd != null ? LocalDate.parse(String.valueOf(bd)) : null);
         }
         return userMapper.toDto(users.save(currentUser));
     }
@@ -63,11 +61,19 @@ public class UserController {
     @Transactional
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable String id, HttpServletRequest request) {
-        UserEntity currentUser = (UserEntity) request.getAttribute("currentUser");
-        if (currentUser == null || !currentUser.getId().equals(id)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
+        requireOwner(request, id);
         authTokens.deleteByUserId(id);
         users.deleteById(id);
+    }
+
+    private UserEntity requireOwner(HttpServletRequest request, String ownerId) {
+        UserEntity currentUser = (UserEntity) request.getAttribute("currentUser");
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+        if (!currentUser.getId().equals(ownerId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return currentUser;
     }
 }

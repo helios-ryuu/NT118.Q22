@@ -1,61 +1,50 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, AppState, type AppStateStatus, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, AppState, type AppStateStatus, FlatList, Pressable, RefreshControl, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
 import { IssueCard } from "@/components/IssueCard";
 import { Avatar } from "@/components/Avatar";
 import { api } from "@/services/api";
 import { endpoints } from "@/services/endpoints";
+import { queryKeys } from "@/services/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import type { Issue } from "@/types/issue";
-import { colors, fonts, text, radius, spacing } from "@/constants/theme";
+import { colors } from "@/constants/theme";
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, token } = useAuth();
-  const [issues, setIssues] = useState<Issue[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { user } = useAuth();
   const [query, setQuery] = useState("");
 
   const focused = useRef(false);
   const appState = useRef(AppState.currentState);
 
-  const load = useCallback(async (silent = false) => {
-    if (!token) return;
-    if (!silent) setLoading(true);
-    try {
-      const all = await api.get<Issue[]>(endpoints.issues.list);
-      setIssues(all.filter(i => i.status === "open" && i.authorId !== user?.id));
-    } catch (e) {
-      console.error("[Home]", e);
-    } finally {
-      if (!silent) setLoading(false);
-      setRefreshing(false);
-    }
-  }, [token, user?.id]);
-
-  const loadRef = useRef(load);
-  useEffect(() => { loadRef.current = load; }, [load]);
+  const issuesQuery = useQuery({
+    queryKey: queryKeys.issues.all,
+    queryFn: () => api.get<Issue[]>(endpoints.issues.list),
+  });
 
   useFocusEffect(useCallback(() => {
     focused.current = true;
-    load();
+    issuesQuery.refetch();
     return () => { focused.current = false; };
-  }, [load]));
+  }, [issuesQuery]));
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && next === "active" && focused.current) {
-        loadRef.current(true);
+        issuesQuery.refetch();
       }
       appState.current = next;
     });
     return () => sub.remove();
-  }, []);
+  }, [issuesQuery]);
 
   const display = useMemo(() => {
-    const sorted = [...issues].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const issues = issuesQuery.data ?? [];
+    const visible = issues.filter(i => i.status === "open" && i.authorId !== user?.id);
+    const sorted = [...visible].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     const q = query.trim().toLowerCase();
     if (!q) return sorted;
     return sorted.filter(i =>
@@ -63,31 +52,31 @@ export default function HomeScreen() {
       i.description.toLowerCase().includes(q) ||
       i.tags.some(t => t.toLowerCase().includes(q))
     );
-  }, [issues, query]);
+  }, [issuesQuery.data, query, user?.id]);
 
-  if (loading) {
-    return <View style={s.center}><ActivityIndicator color={colors.primary} /></View>;
+  if (issuesQuery.isLoading) {
+    return <View className="flex-1 justify-center items-center"><ActivityIndicator color={colors.primary} /></View>;
   }
 
   return (
-    <SafeAreaView style={s.screen} edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-background" edges={["top"]}>
       <FlatList
         data={display}
         keyExtractor={i => i.id}
         renderItem={({ item }) => <IssueCard issue={item} />}
-        contentContainerStyle={s.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.primary} />}
+        contentContainerStyle={{ padding: 16 }}
+        refreshControl={<RefreshControl refreshing={issuesQuery.isRefetching} onRefresh={() => issuesQuery.refetch()} tintColor={colors.primary} />}
         ListHeaderComponent={
           <View>
-            <View style={s.header}>
-              <Text style={s.greeting}>Xin chào, {user?.name?.split(" ").pop() ?? "bạn"}!</Text>
+            <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-xl font-lx-bold text-foreground">Xin chào, {user?.name?.split(" ").pop() ?? "bạn"}!</Text>
               <Pressable onPress={() => router.push("/profile/edit")}>
                 <Avatar uri={user?.avatar} name={user?.name ?? ""} size={36} />
               </Pressable>
             </View>
-            <View style={s.search}>
+            <View className="bg-surface rounded-app border border-border px-3 py-2 mb-4">
               <TextInput
-                style={s.searchInput}
+                className="text-sm font-lx text-foreground p-0"
                 value={query}
                 onChangeText={setQuery}
                 placeholder="Tìm kiếm vấn đề..."
@@ -96,27 +85,17 @@ export default function HomeScreen() {
                 clearButtonMode="while-editing"
               />
             </View>
-            <Text style={s.section}>
+            <Text className="text-base font-lx-semi text-foreground mb-3">
               {query.trim() ? `${display.length} kết quả` : "Danh sách vấn đề"}
             </Text>
           </View>
         }
         ListEmptyComponent={
-          <Text style={s.empty}>{query.trim() ? "Không tìm thấy" : "Chưa có vấn đề phù hợp"}</Text>
+          <Text className="text-center text-muted font-lx text-base mt-8">
+            {query.trim() ? "Không tìm thấy" : "Chưa có vấn đề phù hợp"}
+          </Text>
         }
       />
     </SafeAreaView>
   );
 }
-
-const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  list: { padding: spacing[4] },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing[4] },
-  greeting: { fontSize: text.lg, fontFamily: fonts.bold, color: colors.text },
-  search: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing[3], paddingVertical: spacing[2], marginBottom: spacing[4] },
-  searchInput: { fontSize: text.sm, fontFamily: fonts.regular, color: colors.text, padding: 0 },
-  section: { fontSize: text.md, fontFamily: fonts.semiBold, color: colors.text, marginBottom: spacing[3] },
-  empty: { textAlign: "center", color: colors.textSecondary, fontFamily: fonts.regular, fontSize: text.md, marginTop: spacing[8] },
-});

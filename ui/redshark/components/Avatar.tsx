@@ -1,5 +1,5 @@
-import { Image, StyleSheet, Text, View } from "react-native";
-import { colors, fonts } from "@/constants/theme";
+import { Image, Text, View } from "react-native";
+import { colors } from "@/constants/theme";
 
 interface Props {
   uri: string | null | undefined;
@@ -10,16 +10,19 @@ interface Props {
 export function Avatar({ uri, name, size = 48 }: Props) {
   const initials = name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
   if (uri) {
-    return <Image source={{ uri }} style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.border }} />;
+    return (
+      <Image
+        source={{ uri }}
+        style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: colors.border }}
+      />
+    );
   }
   return (
-    <View style={[s.circle, { width: size, height: size, borderRadius: size / 2 }]}>
-      <Text style={[s.initials, { fontSize: size * 0.36 }]}>{initials}</Text>
+    <View
+      className="bg-primary-light items-center justify-center"
+      style={{ width: size, height: size, borderRadius: size / 2 }}
+    >
+      <Text className="text-primary font-lx-bold" style={{ fontSize: size * 0.36 }}>{initials}</Text>
     </View>
   );
 }
-
-const s = StyleSheet.create({
-  circle: { backgroundColor: colors.primaryLight, alignItems: "center", justifyContent: "center" },
-  initials: { color: colors.primary, fontFamily: fonts.bold },
-});

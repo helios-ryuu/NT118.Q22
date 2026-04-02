@@ -1,3 +1,4 @@
+import "../global.css";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
@@ -10,9 +11,11 @@ import {
   Lexend_700Bold,
 } from "@expo-google-fonts/lexend";
 import * as SplashScreen from "expo-splash-screen";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import { colors, fonts } from "@/constants/theme";
+import { queryClient } from "@/services/queryClient";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -71,8 +74,10 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <AuthProvider>
-      <AuthGate />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AuthGate />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

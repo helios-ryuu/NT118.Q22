@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
@@ -7,7 +7,6 @@ import { TagSelect } from "@/components/TagSelect";
 import { api } from "@/services/api";
 import { endpoints } from "@/services/endpoints";
 import type { Issue } from "@/types/issue";
-import { colors, fonts, text, radius, spacing } from "@/constants/theme";
 
 const PRIORITIES = [
   { label: "Thấp", value: 3 },
@@ -33,7 +32,10 @@ export default function CreateIssueScreen() {
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
-    if (!title.trim()) { Alert.alert("Lỗi", "Vui lòng nhập tiêu đề"); return; }
+    if (!title.trim()) {
+      Alert.alert("Lỗi", "Vui lòng nhập tiêu đề");
+      return;
+    }
     setLoading(true);
     try {
       await api.post<Issue>(endpoints.issues.list, { title: title.trim(), description: description.trim(), tags, priority, durationDays: duration });
@@ -46,27 +48,49 @@ export default function CreateIssueScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={s.screen} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <ScrollView style={s.screen} contentContainerStyle={s.content}>
-        <Input label="Tiêu đề" value={title} onChangeText={setTitle} placeholder="Mô tả ngắn gọn vấn đề" />
-        <Input label="Chi tiết" value={description} onChangeText={setDescription} placeholder="Giải thích rõ hơn..." multiline numberOfLines={4} style={s.multiline} />
+    <KeyboardAvoidingView className="flex-1 bg-background" behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <ScrollView className="flex-1 bg-background" contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
+        <Input
+          label="Tiêu đề"
+          value={title}
+          onChangeText={setTitle}
+          placeholder="Mô tả ngắn gọn vấn đề"
+        />
+
+        <Input
+          label="Chi tiết"
+          value={description}
+          onChangeText={setDescription}
+          placeholder="Giải thích rõ hơn..."
+          multiline
+          numberOfLines={4}
+          style={{ height: 100, textAlignVertical: "top" }}
+        />
 
         <TagSelect selected={tags} onChange={setTags} />
 
-        <Text style={s.label}>Độ ưu tiên</Text>
-        <View style={s.chips}>
+        <Text className="text-sm font-lx-md text-foreground mb-2">Độ ưu tiên</Text>
+        <View className="flex-row flex-wrap gap-2 mb-5">
           {PRIORITIES.map(p => (
-            <Pressable key={p.value} style={[s.chip, priority === p.value && s.chipActive]} onPress={() => setPriority(p.value)}>
-              <Text style={[s.chipText, priority === p.value && s.chipTextActive]}>{p.label}</Text>
+            <Pressable
+              key={p.value}
+              className={`px-3 py-2 rounded-xl border ${priority === p.value ? "border-primary bg-primary-light" : "border-border bg-surface"}`}
+              onPress={() => setPriority(p.value)}
+            >
+              <Text className={`text-sm font-lx-md ${priority === p.value ? "text-primary" : "text-muted"}`}>{p.label}</Text>
             </Pressable>
           ))}
         </View>
 
-        <Text style={s.label}>Thời lượng</Text>
-        <View style={s.chips}>
+        <Text className="text-sm font-lx-md text-foreground mb-2">Thời lượng</Text>
+        <View className="flex-row flex-wrap gap-2 mb-5">
           {DURATIONS.map(d => (
-            <Pressable key={String(d.value)} style={[s.chip, duration === d.value && s.chipActive]} onPress={() => setDuration(d.value)}>
-              <Text style={[s.chipText, duration === d.value && s.chipTextActive]}>{d.label}</Text>
+            <Pressable
+              key={String(d.value)}
+              className={`px-3 py-2 rounded-xl border ${duration === d.value ? "border-primary bg-primary-light" : "border-border bg-surface"}`}
+              onPress={() => setDuration(d.value)}
+            >
+              <Text className={`text-sm font-lx-md ${duration === d.value ? "text-primary" : "text-muted"}`}>{d.label}</Text>
             </Pressable>
           ))}
         </View>
@@ -76,15 +100,3 @@ export default function CreateIssueScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const s = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing[5], paddingBottom: spacing[8] },
-  multiline: { height: 100, textAlignVertical: "top" },
-  label: { fontSize: text.sm, fontFamily: fonts.medium, color: colors.text, marginBottom: spacing[2] },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing[2], marginBottom: spacing[5] },
-  chip: { paddingHorizontal: spacing[3], paddingVertical: spacing[2], borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
-  chipActive: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
-  chipText: { fontSize: text.sm, fontFamily: fonts.medium, color: colors.textSecondary },
-  chipTextActive: { color: colors.primary },
-});
