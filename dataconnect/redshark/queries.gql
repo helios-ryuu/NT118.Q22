@@ -1,0 +1,199 @@
+# ==========================================
+# USER QUERIES
+# ==========================================
+
+# Fetch current user's profile (hydrates AuthContext after sign-in)
+query GetMe @auth(level: USER) {
+  user(key: { id_expr: "auth.uid" }) {
+    id
+    username
+    displayName
+    avatarUrl
+    skillIds
+    createdAt
+  }
+}
+
+# Fetch any user by ID (for displaying author info on cards)
+query GetUser($id: String!) @auth(level: PUBLIC) {
+  user(key: { id: $id }) {
+    id
+    username
+    displayName
+    avatarUrl
+  }
+}
+
+# ==========================================
+# ISSUE QUERIES
+# ==========================================
+
+# Home feed: all non-deleted OPEN issues ordered by newest first
+# Client filters out own issues (authorId != me)
+query ListOpenIssues @auth(level: USER) {
+  issues(
+    where: {
+      deletedAt: { isNull: true }
+      status: { eq: "OPEN" }
+    }
+    orderBy: [{ createdAt: DESC }]
+  ) {
+    id
+    title
+    content
+    status
+    createdAt
+    author {
+      id
+      displayName
+      avatarUrl
+    }
+    idea {
+      id
+      title
+    }
+  }
+}
+
+# My issues tab: issues authored by current user
+query ListMyIssues @auth(level: USER) {
+  issues(
+    where: {
+      authorId: { eq_expr: "auth.uid" }
+      deletedAt: { isNull: true }
+    }
+    orderBy: [{ createdAt: DESC }]
+  ) {
+    id
+    title
+    content
+    status
+    createdAt
+    idea {
+      id
+      title
+    }
+  }
+}
+
+# Issues belonging to a specific Idea
+query ListIssuesByIdea($ideaId: UUID!) @auth(level: USER) {
+  issues(
+    where: {
+      ideaId: { eq: $ideaId }
+      deletedAt: { isNull: true }
+    }
+    orderBy: [{ createdAt: DESC }]
+  ) {
+    id
+    title
+    content
+    status
+    createdAt
+    author {
+      id
+      displayName
+      avatarUrl
+    }
+  }
+}
+
+# Single issue detail
+query GetIssue($id: UUID!) @auth(level: USER) {
+  issue(id: $id) {
+    id
+    title
+    content
+    status
+    createdAt
+    deletedAt
+    author {
+      id
+      displayName
+      avatarUrl
+    }
+    idea {
+      id
+      title
+    }
+  }
+}
+
+# Count active issues for current user (used to enforce max-20 rule client-side)
+query CountMyActiveIssues @auth(level: USER) {
+  issues(
+    where: {
+      authorId: { eq_expr: "auth.uid" }
+      deletedAt: { isNull: true }
+      status: { in: ["OPEN", "IN_PROGRESS"] }
+    }
+  ) {
+    id
+  }
+}
+
+# ==========================================
+# IDEA QUERIES
+# ==========================================
+
+# Ideas authored by current user (ideas tab)
+query ListMyIdeas @auth(level: USER) {
+  ideas(
+    where: {
+      authorId: { eq_expr: "auth.uid" }
+      deletedAt: { isNull: true }
+    }
+    orderBy: [{ lastActivityAt: DESC }]
+  ) {
+    id
+    title
+    description
+    status
+    tagIds
+    lastActivityAt
+    createdAt
+    author {
+      id
+      displayName
+      avatarUrl
+    }
+  }
+}
+
+# Single idea detail
+query GetIdea($id: UUID!) @auth(level: USER) {
+  idea(id: $id) {
+    id
+    title
+    description
+    status
+    tagIds
+    collaboratorIds
+    lastActivityAt
+    createdAt
+    deletedAt
+    author {
+      id
+      displayName
+      avatarUrl
+    }
+  }
+}
+
+# ==========================================
+# LOOKUP QUERIES (public)
+# ==========================================
+
+query ListTags @auth(level: PUBLIC) {
+  tags(orderBy: [{ name: ASC }]) {
+    id
+    name
+  }
+}
+
+query ListSkills @auth(level: PUBLIC) {
+  skills(orderBy: [{ name: ASC }]) {
+    id
+    name
+  }
+}

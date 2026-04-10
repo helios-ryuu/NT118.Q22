@@ -1,0 +1,92 @@
+# ==========================================
+# NHÓM 1: IDENTITY & LOOKUP
+# ==========================================
+
+type User @table(key: "id") {
+  id: String! @default(expr: "auth.uid")
+  username: String! @unique
+  displayName: String
+  avatarUrl: String
+  skillIds: [Int!]
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type Skill @table {
+  id: Int!
+  name: String! @unique
+}
+
+type Tag @table {
+  id: Int!
+  name: String! @unique
+}
+
+# ==========================================
+# NHÓM 2: CORE WORKLOAD
+# ==========================================
+
+type Idea @table {
+  id: UUID! @default(expr: "uuidV4()")
+  author: User!
+  title: String!
+  description: String!
+  status: String! @default(value: "ACTIVE")
+  tagIds: [Int!]
+  collaboratorIds: [String!]
+  lastActivityAt: Timestamp! @default(expr: "request.time")
+  createdAt: Timestamp! @default(expr: "request.time")
+  deletedAt: Timestamp
+}
+
+type Issue @table {
+  id: UUID! @default(expr: "uuidV4()")
+  idea: Idea!
+  author: User!
+  title: String!
+  content: String!
+  status: String! @default(value: "OPEN")
+  createdAt: Timestamp! @default(expr: "request.time")
+  deletedAt: Timestamp
+}
+
+type Comment @table {
+  id: Int64!
+  idea: Idea!
+  author: User!
+  content: String!
+  createdAt: Timestamp! @default(expr: "request.time")
+  deletedAt: Timestamp
+}
+
+# ==========================================
+# NHÓM 3: INTERACTION & MESSAGING
+# ==========================================
+
+type Notification @table {
+  id: Int64!
+  recipient: User!
+  actor: User!
+  type: String!
+  targetId: UUID
+  metaData: Any
+  isRead: Boolean! @default(value: false)
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type Conversation @table {
+  id: UUID! @default(expr: "uuidV4()")
+  type: String! @default(value: "DIRECT")
+  participantIds: [String!]
+  lastMessageAt: Timestamp! @default(expr: "request.time")
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+type Message @table {
+  id: Int64!
+  conversation: Conversation!
+  sender: User!
+  content: String!
+  messageType: String! @default(value: "TEXT")
+  createdAt: Timestamp! @default(expr: "request.time")
+  deletedAt: Timestamp
+}

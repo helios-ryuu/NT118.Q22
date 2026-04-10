@@ -1,0 +1,141 @@
+# ==========================================
+# USER MUTATIONS
+# ==========================================
+
+# Called on first login/register to create the user profile row.
+# Uses upsert so returning users are not duplicated.
+mutation UpsertUser($username: String!, $displayName: String, $avatarUrl: String) @auth(level: USER) {
+  user_upsert(data: {
+    id_expr: "auth.uid"
+    username: $username
+    displayName: $displayName
+    avatarUrl: $avatarUrl
+  })
+}
+
+# Profile edit — only owner can update (where binds to auth.uid)
+mutation UpdateUser($displayName: String, $avatarUrl: String) @auth(level: USER) {
+  user_update(
+    first: { where: { id: { eq_expr: "auth.uid" } } }
+    data: {
+      displayName: $displayName
+      avatarUrl: $avatarUrl
+    }
+  )
+}
+
+# Delete current user's profile row (Firebase Auth deletion done client-side)
+mutation DeleteUser @auth(level: USER) {
+  user_delete(key: { id_expr: "auth.uid" })
+}
+
+# ==========================================
+# IDEA MUTATIONS
+# ==========================================
+
+mutation CreateIdea($title: String!, $description: String!, $tagIds: [Int!]) @auth(level: USER) {
+  idea_insert(data: {
+    authorId_expr: "auth.uid"
+    title: $title
+    description: $description
+    tagIds: $tagIds
+    status: "ACTIVE"
+  })
+}
+
+# Only owner can update (authorId check in where clause)
+mutation UpdateIdea($id: UUID!, $title: String, $description: String, $tagIds: [Int!]) @auth(level: USER) {
+  idea_update(
+    first: { where: {
+      id: { eq: $id }
+      authorId: { eq_expr: "auth.uid" }
+      deletedAt: { isNull: true }
+    }}
+    data: {
+      title: $title
+      description: $description
+      tagIds: $tagIds
+      lastActivityAt_expr: "request.time"
+    }
+  )
+}
+
+# Soft delete — only owner, sets deletedAt timestamp
+mutation DeleteIdea($id: UUID!) @auth(level: USER) {
+  idea_update(
+    first: { where: {
+      id: { eq: $id }
+      authorId: { eq_expr: "auth.uid" }
+      deletedAt: { isNull: true }
+    }}
+    data: {
+      deletedAt_expr: "request.time"
+    }
+  )
+}
+
+# ==========================================
+# ISSUE MUTATIONS
+# ==========================================
+
+# Create issue + update parent idea's lastActivityAt atomically
+mutation CreateIssue($ideaId: UUID!, $title: String!, $content: String!) @auth(level: USER) @transaction {
+  idea_update(
+    first: { where: {
+      id: { eq: $ideaId }
+      deletedAt: { isNull: true }
+    }}
+    data: { lastActivityAt_expr: "request.time" }
+  )
+  issue_insert(data: {
+    ideaId: $ideaId
+    authorId_expr: "auth.uid"
+    title: $title
+    content: $content
+    status: "OPEN"
+  })
+}
+
+# Edit — server enforces: owner only, OPEN status only, not deleted
+mutation UpdateIssue($id: UUID!, $title: String!, $content: String!) @auth(level: USER) {
+  issue_update(
+    first: { where: {
+      id: { eq: $id }
+      authorId: { eq_expr: "auth.uid" }
+      status: { eq: "OPEN" }
+      deletedAt: { isNull: true }
+    }}
+    data: {
+      title: $title
+      content: $content
+    }
+  )
+}
+
+# Status change — server enforces: owner only, not deleted
+# Client is responsible for validating the state machine direction
+mutation UpdateIssueStatus($id: UUID!, $status: String!) @auth(level: USER) {
+  issue_update(
+    first: { where: {
+      id: { eq: $id }
+      authorId: { eq_expr: "auth.uid" }
+      deletedAt: { isNull: true }
+    }}
+    data: { status: $status }
+  )
+}
+
+# Soft delete — server enforces: owner only, OPEN status only
+mutation DeleteIssue($id: UUID!) @auth(level: USER) {
+  issue_update(
+    first: { where: {
+      id: { eq: $id }
+      authorId: { eq_expr: "auth.uid" }
+      status: { eq: "OPEN" }
+      deletedAt: { isNull: true }
+    }}
+    data: {
+      deletedAt_expr: "request.time"
+    }
+  )
+}
