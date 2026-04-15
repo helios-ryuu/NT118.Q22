@@ -1,7 +1,6 @@
 # Project secrets
 .env
-.env*.local
-serviceAccountKey.json
+dataconnect/serviceAccountKey.json
 application.properties
 
 # IDE

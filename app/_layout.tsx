@@ -50,10 +50,16 @@ function AuthGate() {
     >
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="idea/[id]" options={{ title: "Chi tiết ý tưởng" }} />
+      <Stack.Screen name="idea/create" options={{ title: "Tạo ý tưởng" }} />
+      <Stack.Screen name="idea/edit" options={{ title: "Chỉnh sửa ý tưởng" }} />
       <Stack.Screen name="issue/[id]" options={{ title: "Chi tiết vấn đề" }} />
-<Stack.Screen name="issue/create" options={{ title: "Tạo vấn đề" }} />
+      <Stack.Screen name="issue/create" options={{ title: "Tạo vấn đề" }} />
       <Stack.Screen name="issue/edit" options={{ title: "Chỉnh sửa vấn đề" }} />
+      <Stack.Screen name="profile/[id]" options={{ title: "Hồ sơ" }} />
       <Stack.Screen name="profile/edit" options={{ title: "Chỉnh sửa hồ sơ" }} />
+      <Stack.Screen name="conversation/[id]" options={{ title: "Tin nhắn" }} />
+      <Stack.Screen name="conversation/new" options={{ headerShown: false }} />
     </Stack>
   );
 }

@@ -3,7 +3,7 @@ import { ActivityIndicator, AppState, type AppStateStatus, FlatList, Pressable, 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { listOpenIssues } from "@dataconnect/generated";
+import { listMyIssues, listOpenIssues } from "@dataconnect/generated";
 import { IssueCard } from "@/components/IssueCard";
 import { Avatar } from "@/components/Avatar";
 import { queryKeys } from "@/services/queryKeys";
@@ -11,15 +11,18 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Issue } from "@/types/issue";
 import { colors } from "@/constants/theme";
 
+type Tab = "all" | "mine";
+
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [query, setQuery] = useState("");
+  const [tab, setTab] = useState<Tab>("all");
 
   const focused = useRef(false);
   const appState = useRef(AppState.currentState);
 
-  const issuesQuery = useQuery({
+  const allIssuesQuery = useQuery({
     queryKey: queryKeys.issues.all,
     enabled: !!user,
     queryFn: async () => {
@@ -38,34 +41,59 @@ export default function HomeScreen() {
     },
   });
 
+  const myIssuesQuery = useQuery({
+    queryKey: queryKeys.issues.mine,
+    enabled: !!user,
+    queryFn: async () => {
+      const result = await listMyIssues();
+      return result.data.issues.map<Issue>(i => ({
+        id: i.id,
+        ideaId: i.idea.id,
+        title: i.title,
+        content: i.content,
+        status: i.status as Issue["status"],
+        authorId: user!.id,
+        authorDisplayName: user?.displayName ?? null,
+        authorAvatarUrl: user?.avatarUrl ?? null,
+        createdAt: i.createdAt,
+      }));
+    },
+  });
+
+  const activeQuery = tab === "all" ? allIssuesQuery : myIssuesQuery;
+
   useFocusEffect(useCallback(() => {
     focused.current = true;
-    if (user) issuesQuery.refetch();
+    if (user) {
+      allIssuesQuery.refetch();
+      myIssuesQuery.refetch();
+    }
     return () => { focused.current = false; };
-  }, [issuesQuery, user]));
+  }, [allIssuesQuery, myIssuesQuery, user]));
 
   useEffect(() => {
     const sub = AppState.addEventListener("change", (next: AppStateStatus) => {
       if (appState.current.match(/inactive|background/) && next === "active" && focused.current && user) {
-        issuesQuery.refetch();
+        allIssuesQuery.refetch();
+        myIssuesQuery.refetch();
       }
       appState.current = next;
     });
     return () => sub.remove();
-  }, [issuesQuery, user]);
+  }, [allIssuesQuery, myIssuesQuery, user]);
 
   const display = useMemo(() => {
-    const allIssues = issuesQuery.data ?? [];
-    const visible = allIssues.filter(i => i.authorId !== user?.id);
+    const allIssues = activeQuery.data ?? [];
+    const visible = tab === "all" ? allIssues.filter(i => i.authorId !== user?.id) : allIssues;
     const q = query.trim().toLowerCase();
     if (!q) return visible;
     return visible.filter(i =>
       i.title.toLowerCase().includes(q) ||
       i.content.toLowerCase().includes(q)
     );
-  }, [issuesQuery.data, query, user?.id]);
+  }, [activeQuery.data, query, user?.id, tab]);
 
-  if (issuesQuery.isLoading) {
+  if (activeQuery.isLoading) {
     return <View className="flex-1 justify-center items-center"><ActivityIndicator color={colors.primary} /></View>;
   }
 
@@ -76,7 +104,7 @@ export default function HomeScreen() {
         keyExtractor={i => i.id}
         renderItem={({ item }) => <IssueCard issue={item} />}
         contentContainerStyle={{ padding: 16 }}
-        refreshControl={<RefreshControl refreshing={issuesQuery.isRefetching} onRefresh={() => issuesQuery.refetch()} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={activeQuery.isRefetching} onRefresh={() => activeQuery.refetch()} tintColor={colors.primary} />}
         ListHeaderComponent={
           <View>
             <View className="flex-row justify-between items-center mb-4">
@@ -85,6 +113,23 @@ export default function HomeScreen() {
                 <Avatar uri={user?.avatarUrl} name={user?.displayName ?? user?.username ?? ""} size={36} />
               </Pressable>
             </View>
+
+            {/* Segment filter */}
+            <View className="flex-row bg-surface border border-border rounded-app mb-4 p-1">
+              <Pressable
+                className={`flex-1 py-1.5 rounded-md items-center ${tab === "all" ? "bg-primary" : ""}`}
+                onPress={() => setTab("all")}
+              >
+                <Text className={`text-sm font-lx-semi ${tab === "all" ? "text-white" : "text-muted"}`}>Mọi người</Text>
+              </Pressable>
+              <Pressable
+                className={`flex-1 py-1.5 rounded-md items-center ${tab === "mine" ? "bg-primary" : ""}`}
+                onPress={() => setTab("mine")}
+              >
+                <Text className={`text-sm font-lx-semi ${tab === "mine" ? "text-white" : "text-muted"}`}>Của tôi</Text>
+              </Pressable>
+            </View>
+
             <View className="bg-surface rounded-app border border-border px-3 py-2 mb-4">
               <TextInput
                 className="text-sm font-lx text-foreground p-0"
@@ -97,13 +142,13 @@ export default function HomeScreen() {
               />
             </View>
             <Text className="text-base font-lx-semi text-foreground mb-3">
-              {query.trim() ? `${display.length} kết quả` : "Vấn đề cần hỗ trợ"}
+              {query.trim() ? `${display.length} kết quả` : tab === "all" ? "Vấn đề cần hỗ trợ" : "Vấn đề của tôi"}
             </Text>
           </View>
         }
         ListEmptyComponent={
           <Text className="text-center text-muted font-lx text-base mt-8">
-            {query.trim() ? "Không tìm thấy" : "Chưa có vấn đề phù hợp"}
+            {query.trim() ? "Không tìm thấy" : tab === "all" ? "Chưa có vấn đề phù hợp" : "Bạn chưa tạo vấn đề nào"}
           </Text>
         }
       />

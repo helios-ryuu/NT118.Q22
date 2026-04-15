@@ -334,6 +334,26 @@ Toàn bộ các query được định nghĩa tại [`dataconnect/redshark/queri
 | `ListTags` | `PUBLIC` | Liệt kê toàn bộ tags đã seed, sắp xếp theo tên | — |
 | `ListSkills` | `PUBLIC` | Liệt kê toàn bộ skills đã seed, sắp xếp theo tên | — |
 
+### 6.5. Comment Queries
+
+| Tên query | Auth | Mô tả | Tham số | Lọc/Sắp xếp |
+|-----------|------|-------|---------|-------------|
+| `ListCommentsByIdea` | `USER` | Liệt kê các comment chưa xóa của một idea, sắp xếp cũ nhất trước (thread phẳng) | `$ideaId: UUID!` | `ideaId = $ideaId AND deletedAt IS NULL`, ORDER BY `createdAt ASC` |
+
+### 6.6. Conversation & Message Queries
+
+| Tên query | Auth | Mô tả | Tham số | Lọc/Sắp xếp |
+|-----------|------|-------|---------|-------------|
+| `ListMyConversations` | `USER` | Liệt kê conversation mà user hiện tại là participant, sắp xếp theo tin nhắn gần nhất | `$myId: String!` | `participantIds includes $myId`, ORDER BY `lastMessageAt DESC` |
+| `ListMessagesByConversation` | `USER` | Liệt kê tin nhắn chưa xóa trong một conversation, sắp xếp cũ nhất trước | `$conversationId: UUID!` | `conversationId = $conversationId AND deletedAt IS NULL`, ORDER BY `createdAt ASC` |
+
+### 6.7. Notification Queries
+
+| Tên query | Auth | Mô tả | Tham số | Lọc/Sắp xếp |
+|-----------|------|-------|---------|-------------|
+| `ListMyNotifications` | `USER` | Liệt kê toàn bộ thông báo của user hiện tại, mới nhất trước | — | `recipientId = auth.uid`, ORDER BY `createdAt DESC` |
+| `CountUnreadNotifications` | `USER` | Đếm số thông báo chưa đọc — dùng để hiển thị badge trên tab Thông báo | — | `recipientId = auth.uid AND isRead = false` |
+
 ---
 
 ## 7. Danh sách Mutation
@@ -345,7 +365,7 @@ Toàn bộ mutation được định nghĩa tại [`dataconnect/redshark/mutatio
 | Tên mutation | Auth | Mô tả | Tham số | Ràng buộc server-side |
 |--------------|------|-------|---------|----------------------|
 | `UpsertUser` | `USER` | Tạo mới hoặc cập nhật profile (idempotent). Gọi lần đầu sau khi đăng ký hoặc Google Sign-In. | `$username: String!, $displayName: String, $avatarUrl: String` | `id` bind tự động với `auth.uid` |
-| `UpdateUser` | `USER` | Cập nhật `displayName` và/hoặc `avatarUrl` của user hiện tại | `$displayName: String, $avatarUrl: String` | `where: { id = auth.uid }` |
+| `UpdateUser` | `USER` | Cập nhật `displayName`, `avatarUrl` và/hoặc `skillIds` của user hiện tại | `$displayName: String, $avatarUrl: String, $skillIds: [Int!]` | `where: { id = auth.uid }` |
 | `DeleteUser` | `USER` | Xóa bản ghi profile của user hiện tại khỏi FDC. Việc xóa Firebase Auth account được client gọi riêng. | — | `key: { id = auth.uid }` |
 
 ### 7.2. Idea Mutations
@@ -353,7 +373,7 @@ Toàn bộ mutation được định nghĩa tại [`dataconnect/redshark/mutatio
 | Tên mutation | Auth | Mô tả | Tham số | Ràng buộc server-side |
 |--------------|------|-------|---------|----------------------|
 | `CreateIdea` | `USER` | Tạo idea mới. `authorId` tự bind với `auth.uid`, `status` mặc định `ACTIVE`. | `$title: String!, $description: String!, $tagIds: [Int!]` | — |
-| `UpdateIdea` | `USER` | Cập nhật idea — chỉ owner mới thao tác được, không cho update idea đã bị xóa. Đồng thời cập nhật `lastActivityAt`. | `$id: UUID!, $title: String, $description: String, $tagIds: [Int!]` | `id = $id AND authorId = auth.uid AND deletedAt IS NULL` |
+| `UpdateIdea` | `USER` | Cập nhật idea — chỉ owner mới thao tác được, không cho update idea đã bị xóa. Đồng thời cập nhật `lastActivityAt`. Hỗ trợ cập nhật `status` (ACTIVE → CLOSED/CANCELLED) và `collaboratorIds`. | `$id: UUID!, $title: String, $description: String, $tagIds: [Int!], $status: String, $collaboratorIds: [String!]` | `id = $id AND authorId = auth.uid AND deletedAt IS NULL` |
 | `DeleteIdea` | `USER` | Xóa mềm idea (set `deletedAt = request.time`), chỉ owner mới xóa được. | `$id: UUID!` | `id = $id AND authorId = auth.uid AND deletedAt IS NULL` |
 
 ### 7.3. Issue Mutations
@@ -365,6 +385,28 @@ Toàn bộ mutation được định nghĩa tại [`dataconnect/redshark/mutatio
 | `UpdateIssueStatus` | `USER` | No | Chuyển trạng thái của issue (OPEN → IN_PROGRESS → CLOSED, hoặc OPEN → CANCELLED). Client chịu trách nhiệm kiểm tra hướng chuyển trạng thái hợp lệ. | `$id: UUID!, $status: String!` | `id = $id AND authorId = auth.uid AND deletedAt IS NULL` |
 | `DeleteIssue` | `USER` | No | Xóa mềm issue. Chỉ được xóa khi issue đang ở trạng thái `OPEN`. | `$id: UUID!` | `id = $id AND authorId = auth.uid AND status = 'OPEN' AND deletedAt IS NULL` |
 
+### 7.4. Comment Mutations
+
+| Tên mutation | Auth | Transaction | Mô tả | Tham số | Ràng buộc server-side |
+|--------------|------|-------------|-------|---------|----------------------|
+| `CreateComment` | `USER` | **Yes** | Tạo comment **và** cập nhật `ideas.lastActivityAt` của idea cha trong cùng transaction. | `$ideaId: UUID!, $content: String!` | Idea cha phải chưa bị xóa. |
+| `DeleteComment` | `USER` | No | Xóa mềm comment (set `deletedAt`). Chỉ owner của comment mới xóa được. | `$id: Int64!` | `id = $id AND authorId = auth.uid AND deletedAt IS NULL` |
+
+### 7.5. Conversation & Message Mutations
+
+| Tên mutation | Auth | Transaction | Mô tả | Tham số | Ràng buộc server-side |
+|--------------|------|-------------|-------|---------|----------------------|
+| `CreateConversation` | `USER` | No | Tạo conversation mới loại `DIRECT`. Client kiểm tra conversation đã tồn tại trước khi gọi (trong `conversation/new.tsx`). | `$participantIds: [String!]!` | — |
+| `SendMessage` | `USER` | **Yes** | Gửi tin nhắn **và** cập nhật `conversations.lastMessageAt` trong cùng transaction. | `$conversationId: UUID!, $content: String!` | — |
+| `DeleteMessage` | `USER` | No | Xóa mềm tin nhắn. Chỉ người gửi mới xóa được. | `$id: Int64!` | `id = $id AND senderId = auth.uid AND deletedAt IS NULL` |
+
+### 7.6. Notification Mutations
+
+| Tên mutation | Auth | Mô tả | Tham số | Ràng buộc server-side |
+|--------------|------|-------|---------|----------------------|
+| `CreateNotification` | `USER` | Tạo thông báo cho người nhận. `actorId` tự bind với `auth.uid`. Gọi client-side sau: tạo issue (ISSUE_CREATED), tạo comment (COMMENT_ADDED), gửi collab request (COLLAB_REQUEST), chấp thuận collab (COLLAB_ACCEPTED). | `$recipientId: String!, $type: String!, $targetId: UUID, $metaData: Any` | `actorId_expr: "auth.uid"` |
+| `MarkNotificationRead` | `USER` | Đánh dấu một thông báo là đã đọc (`isRead = true`). Chỉ recipient mới thao tác được. | `$id: Int64!` | `id = $id AND recipientId = auth.uid` |
+
 ---
 
 ## 8. Quy tắc phân quyền (Auth Level)
@@ -374,7 +416,7 @@ Firebase Data Connect hỗ trợ phân quyền ở cấp operation thông qua di
 | Auth Level | Ý nghĩa | Áp dụng cho |
 |------------|---------|-------------|
 | `PUBLIC`   | Không cần đăng nhập — ai cũng gọi được | `GetUser`, `ListTags`, `ListSkills` |
-| `USER`     | Bắt buộc phải đăng nhập (Firebase Auth token hợp lệ) | Tất cả query/mutation còn lại |
+| `USER`     | Bắt buộc phải đăng nhập (Firebase Auth token hợp lệ) | Tất cả query/mutation còn lại (ideas, issues, comments, conversations, messages, notifications) |
 | `NO_ACCESS`| Không ai gọi được (chỉ dùng cho internal) | Không áp dụng trong dự án này |
 
 Quy tắc bảo mật bổ sung:

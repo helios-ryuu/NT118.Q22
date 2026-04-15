@@ -14,12 +14,13 @@ mutation UpsertUser($username: String!, $displayName: String, $avatarUrl: String
 }
 
 # Profile edit — only owner can update (where binds to auth.uid)
-mutation UpdateUser($displayName: String, $avatarUrl: String) @auth(level: USER) {
+mutation UpdateUser($displayName: String, $avatarUrl: String, $skillIds: [Int!]) @auth(level: USER) {
   user_update(
     first: { where: { id: { eq_expr: "auth.uid" } } }
     data: {
       displayName: $displayName
       avatarUrl: $avatarUrl
+      skillIds: $skillIds
     }
   )
 }
@@ -44,7 +45,7 @@ mutation CreateIdea($title: String!, $description: String!, $tagIds: [Int!]) @au
 }
 
 # Only owner can update (authorId check in where clause)
-mutation UpdateIdea($id: UUID!, $title: String, $description: String, $tagIds: [Int!]) @auth(level: USER) {
+mutation UpdateIdea($id: UUID!, $title: String, $description: String, $tagIds: [Int!], $status: String, $collaboratorIds: [String!]) @auth(level: USER) {
   idea_update(
     first: { where: {
       id: { eq: $id }
@@ -55,6 +56,8 @@ mutation UpdateIdea($id: UUID!, $title: String, $description: String, $tagIds: [
       title: $title
       description: $description
       tagIds: $tagIds
+      status: $status
+      collaboratorIds: $collaboratorIds
       lastActivityAt_expr: "request.time"
     }
   )
@@ -137,5 +140,101 @@ mutation DeleteIssue($id: UUID!) @auth(level: USER) {
     data: {
       deletedAt_expr: "request.time"
     }
+  )
+}
+
+# ==========================================
+# COMMENT MUTATIONS
+# ==========================================
+
+# @transaction: tạo comment + cập nhật lastActivityAt của idea
+mutation CreateComment($ideaId: UUID!, $content: String!) @auth(level: USER) @transaction {
+  idea_update(
+    first: { where: {
+      id: { eq: $ideaId }
+      deletedAt: { isNull: true }
+    }}
+    data: { lastActivityAt_expr: "request.time" }
+  )
+  comment_insert(data: {
+    ideaId: $ideaId
+    authorId_expr: "auth.uid"
+    content: $content
+  })
+}
+
+# Soft delete comment — chỉ owner
+mutation DeleteComment($id: Int64!) @auth(level: USER) {
+  comment_update(
+    first: { where: {
+      id: { eq: $id }
+      authorId: { eq_expr: "auth.uid" }
+      deletedAt: { isNull: true }
+    }}
+    data: {
+      deletedAt_expr: "request.time"
+    }
+  )
+}
+
+# ==========================================
+# CONVERSATION & MESSAGE MUTATIONS
+# ==========================================
+
+mutation CreateConversation($participantIds: [String!]!) @auth(level: USER) {
+  conversation_insert(data: {
+    participantIds: $participantIds
+    type: "DIRECT"
+  })
+}
+
+# @transaction: gửi tin + cập nhật lastMessageAt
+mutation SendMessage($conversationId: UUID!, $content: String!) @auth(level: USER) @transaction {
+  conversation_update(
+    first: { where: { id: { eq: $conversationId } } }
+    data: { lastMessageAt_expr: "request.time" }
+  )
+  message_insert(data: {
+    conversationId: $conversationId
+    senderId_expr: "auth.uid"
+    content: $content
+  })
+}
+
+# Soft delete message — chỉ sender
+mutation DeleteMessage($id: Int64!) @auth(level: USER) {
+  message_update(
+    first: { where: {
+      id: { eq: $id }
+      senderId: { eq_expr: "auth.uid" }
+      deletedAt: { isNull: true }
+    }}
+    data: {
+      deletedAt_expr: "request.time"
+    }
+  )
+}
+
+# ==========================================
+# NOTIFICATION MUTATIONS
+# ==========================================
+
+mutation CreateNotification($recipientId: String!, $type: String!, $targetId: UUID, $metaData: Any) @auth(level: USER) {
+  notification_insert(data: {
+    recipientId: $recipientId
+    actorId_expr: "auth.uid"
+    type: $type
+    targetId: $targetId
+    metaData: $metaData
+  })
+}
+
+mutation MarkNotificationRead($id: Int64!) @auth(level: USER) {
+  notification_update(
+    first: { where: {
+      id: { eq: $id }
+      recipientId: { eq_expr: "auth.uid" }
+    }}
+    data: { isRead: true }
   )
 }

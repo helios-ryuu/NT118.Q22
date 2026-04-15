@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { countMyActiveIssues, createIssue } from "@dataconnect/generated";
+import { useQueryClient } from "@tanstack/react-query";
+import { countMyActiveIssues, createIssue, createNotification } from "@dataconnect/generated";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
+import { queryKeys } from "@/services/queryKeys";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function CreateIssueScreen() {
-  const { ideaId } = useLocalSearchParams<{ ideaId: string }>();
+  const { ideaId, authorId } = useLocalSearchParams<{ ideaId: string; authorId: string }>();
+  const { user } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,11 +34,23 @@ export default function CreateIssueScreen() {
         Alert.alert("Giới hạn", "Bạn đã đạt giới hạn 20 vấn đề đang hoạt động");
         return;
       }
-      await createIssue({
+      const result = await createIssue({
         ideaId,
         title: title.trim(),
         content: content.trim(),
       });
+      // Notify idea author (skip if author is current user)
+      if (authorId && user && authorId !== user.id) {
+        await createNotification({
+          recipientId: authorId,
+          type: "ISSUE_CREATED",
+          targetId: result.data.issue_insert?.id ?? null,
+          metaData: null,
+        }).catch(() => {}); // notification failure is non-critical
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.issues.byIdea(ideaId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.ideas.detail(ideaId) });
       Alert.alert("Thành công", "Đã tạo vấn đề mới", [{ text: "OK", onPress: () => router.back() }]);
     } catch {
       Alert.alert("Lỗi", "Không thể tạo vấn đề");

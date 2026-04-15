@@ -16,7 +16,7 @@ export default function AuthLayout() {
         contentStyle: { backgroundColor: colors.background },
       }}
     >
-      <Stack.Screen name="email" options={{ title: "Nhập email" }} />
+      <Stack.Screen name="email" options={{ title: "", headerShown: false }} />
       <Stack.Screen name="password" options={{ title: "Đăng nhập" }} />
       <Stack.Screen name="register" options={{ title: "Tạo tài khoản" }} />
     </Stack>

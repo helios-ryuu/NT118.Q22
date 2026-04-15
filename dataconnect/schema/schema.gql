@@ -50,7 +50,7 @@ type Issue @table {
 }
 
 type Comment @table {
-  id: Int64!
+  id: Int64! @col(dataType: "bigserial")
   idea: Idea!
   author: User!
   content: String!
@@ -63,7 +63,7 @@ type Comment @table {
 # ==========================================
 
 type Notification @table {
-  id: Int64!
+  id: Int64! @col(dataType: "bigserial")
   recipient: User!
   actor: User!
   type: String!
@@ -82,7 +82,7 @@ type Conversation @table {
 }
 
 type Message @table {
-  id: Int64!
+  id: Int64! @col(dataType: "bigserial")
   conversation: Conversation!
   sender: User!
   content: String!

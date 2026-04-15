@@ -43,17 +43,20 @@ export default function IssueDetailScreen() {
   const deleteMutation = useMutation({
     mutationFn: () => deleteIssue({ id: id as string }),
     onSuccess: () => {
+      const ideaId = issueQuery.data?.ideaId;
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.all });
+      if (ideaId) queryClient.invalidateQueries({ queryKey: queryKeys.issues.byIdea(ideaId) });
       router.back();
     },
   });
 
-  const closeMutation = useMutation({
-    mutationFn: () => updateIssueStatus({ id: id as string, status: "CLOSED" }),
+  const statusMutation = useMutation({
+    mutationFn: (status: string) => updateIssueStatus({ id: id as string, status }),
     onSuccess: () => {
+      const ideaId = issueQuery.data?.ideaId;
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.issues.detail(id as string) });
-      router.back();
+      if (ideaId) queryClient.invalidateQueries({ queryKey: queryKeys.issues.byIdea(ideaId) });
     },
   });
 
@@ -66,10 +69,24 @@ export default function IssueDetailScreen() {
     ]);
   };
 
+  const handleStartProgress = () => {
+    Alert.alert("Bắt đầu xử lý", "Chuyển vấn đề sang trạng thái đang xử lý?", [
+      { text: "Hủy", style: "cancel" },
+      { text: "Xác nhận", onPress: async () => { await statusMutation.mutateAsync("IN_PROGRESS"); }},
+    ]);
+  };
+
   const handleClose = () => {
     Alert.alert("Đóng vấn đề", "Đóng vấn đề này?", [
       { text: "Hủy", style: "cancel" },
-      { text: "Đóng", onPress: async () => { await closeMutation.mutateAsync(); }},
+      { text: "Đóng", onPress: async () => { await statusMutation.mutateAsync("CLOSED"); }},
+    ]);
+  };
+
+  const handleCancel = () => {
+    Alert.alert("Huỷ vấn đề", "Huỷ vấn đề này?", [
+      { text: "Hủy", style: "cancel" },
+      { text: "Xác nhận", style: "destructive", onPress: async () => { await statusMutation.mutateAsync("CANCELLED"); }},
     ]);
   };
 
@@ -98,23 +115,25 @@ export default function IssueDetailScreen() {
       <Text className="text-2xl font-lx-bold text-foreground mb-2">{issue.title}</Text>
       <Text className="text-base font-lx text-muted leading-6 mb-4">{issue.content}</Text>
 
-      <View className="flex-row items-center gap-3 mb-4">
+      <Pressable className="flex-row items-center gap-3 mb-4" onPress={() => router.push(`/profile/${issue.authorId}`)}>
         <Avatar uri={issue.authorAvatarUrl} name={issue.authorDisplayName ?? ""} size={32} />
-        <Text className="text-base font-lx-md text-foreground">{issue.authorDisplayName ?? issue.authorId}</Text>
-      </View>
+        <Text className="text-base font-lx-md text-primary">{issue.authorDisplayName ?? issue.authorId}</Text>
+      </Pressable>
 
       <Text className="text-sm font-lx text-muted mb-5">Tạo lúc: {new Date(issue.createdAt).toLocaleString("vi-VN")}</Text>
 
       {isOwner && issue.status === "OPEN" && (
         <View className="gap-3">
+          <Button title="Bắt đầu xử lý" onPress={handleStartProgress} />
           <Button title="Chỉnh sửa" variant="outline" onPress={() => router.push(`/issue/edit?id=${issue.id}`)} />
+          <Button title="Huỷ vấn đề" variant="ghost" onPress={handleCancel} />
           <Button title="Xóa" variant="ghost" onPress={handleDelete} />
         </View>
       )}
 
       {isOwner && issue.status === "IN_PROGRESS" && (
         <View className="gap-3">
-          <Button title="Đóng vấn đề" variant="outline" onPress={handleClose} />
+          <Button title="Đóng vấn đề" onPress={handleClose} />
         </View>
       )}
     </ScrollView>

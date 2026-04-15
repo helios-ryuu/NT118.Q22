@@ -197,3 +197,100 @@ query ListSkills @auth(level: PUBLIC) {
     name
   }
 }
+
+# ==========================================
+# COMMENT QUERIES
+# ==========================================
+
+query ListCommentsByIdea($ideaId: UUID!) @auth(level: USER) {
+  comments(
+    where: {
+      ideaId: { eq: $ideaId }
+      deletedAt: { isNull: true }
+    }
+    orderBy: [{ createdAt: ASC }]
+  ) {
+    id
+    content
+    createdAt
+    author {
+      id
+      displayName
+      avatarUrl
+    }
+  }
+}
+
+# ==========================================
+# CONVERSATION QUERIES
+# ==========================================
+
+# Conversations mà auth.uid là participant, sắp xếp mới nhất trước
+query ListMyConversations($myId: String!) @auth(level: USER) {
+  conversations(
+    where: {
+      participantIds: { includes: $myId }
+    }
+    orderBy: [{ lastMessageAt: DESC }]
+  ) {
+    id
+    participantIds
+    lastMessageAt
+  }
+}
+
+query ListMessagesByConversation($conversationId: UUID!) @auth(level: USER) {
+  messages(
+    where: {
+      conversationId: { eq: $conversationId }
+      deletedAt: { isNull: true }
+    }
+    orderBy: [{ createdAt: ASC }]
+  ) {
+    id
+    content
+    createdAt
+    sender {
+      id
+      displayName
+      avatarUrl
+    }
+  }
+}
+
+# ==========================================
+# NOTIFICATION QUERIES
+# ==========================================
+
+query ListMyNotifications @auth(level: USER) {
+  notifications(
+    where: {
+      recipientId: { eq_expr: "auth.uid" }
+    }
+    orderBy: [{ createdAt: DESC }]
+  ) {
+    id
+    type
+    targetId
+    metaData
+    isRead
+    createdAt
+    actor {
+      id
+      displayName
+      avatarUrl
+    }
+  }
+}
+
+# Đếm notification chưa đọc — dùng cho badge trên tab
+query CountUnreadNotifications @auth(level: USER) {
+  notifications(
+    where: {
+      recipientId: { eq_expr: "auth.uid" }
+      isRead: { eq: false }
+    }
+  ) {
+    id
+  }
+}

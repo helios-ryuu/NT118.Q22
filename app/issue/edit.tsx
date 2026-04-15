@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text } from "react-native";
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIssue, updateIssue } from "@dataconnect/generated";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { queryKeys } from "@/services/queryKeys";
+import { colors } from "@/constants/theme";
 
 export default function EditIssueScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -50,7 +51,9 @@ export default function EditIssueScreen() {
     }
   };
 
-  if (issueQuery.isLoading) return null;
+  if (issueQuery.isLoading) {
+    return <View className="flex-1 justify-center items-center bg-background"><ActivityIndicator size="large" color={colors.primary} /></View>;
+  }
 
   return (
     <KeyboardAvoidingView className="flex-1 bg-background" behavior={Platform.OS === "ios" ? "padding" : "height"}>

@@ -56,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
       if (skipObserver.current) return;
+      setLoading(true);
       try {
         if (firebaseUser) {
           const result = await getMe();
@@ -63,7 +64,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(result.data.user as User);
           } else {
             // Lan dau dang nhap qua Google — tao profile tu Firebase Auth
-            const username = (firebaseUser.email?.split("@")[0] ?? `user${Date.now()}`).replace(/[^a-zA-Z0-9._]/g, "");
+            const base = (firebaseUser.email?.split("@")[0] ?? "user").replace(/[^a-zA-Z0-9._]/g, "");
+            const username = `${base}_${Date.now().toString(36).slice(-4)}`;
             await upsertUser({
               username,
               displayName: firebaseUser.displayName ?? null,
@@ -129,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await updateUserMutation({
       displayName: partial.displayName ?? undefined,
       avatarUrl: partial.avatarUrl ?? undefined,
+      skillIds: partial.skillIds ?? undefined,
     });
     const result = await getMe();
     if (result.data.user) {

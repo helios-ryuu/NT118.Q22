@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
-import { router } from "expo-router";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { useAuth } from "@/hooks/useAuth";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Image, KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-native";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -20,8 +21,9 @@ export default function EmailScreen() {
     try {
       await signInWithGoogle();
       // onAuthStateChanged trong AuthContext se set user, AuthGate se tu chuyen sang (tabs)
-    } catch {
-      setOAuthError("Đăng nhập Google thất bại. Vui lòng thử lại.");
+    } catch (err: any) {
+      const detail = err?.message ? ` (${err.message})` : "";
+      setOAuthError(`Đăng nhập Google thất bại${detail}.`);
       setOAuthLoading(false);
     }
   };
@@ -53,8 +55,14 @@ export default function EmailScreen() {
   return (
     <KeyboardAvoidingView className="flex-1 bg-background" behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }} keyboardShouldPersistTaps="handled">
+        <View className="items-center mb-10">
+          <Image
+            source={require("@/assets/images/logo_text_vertical.png")}
+            style={{ width: 160, height: 160 }}
+            resizeMode="contain"
+          />
+        </View>
         <View className="mb-6">
-          <Text className="text-2xl font-lx-bold text-foreground mb-2">Nhập email của bạn</Text>
           <Text className="text-sm font-lx text-muted">Chúng tôi sẽ kiểm tra tài khoản của bạn</Text>
         </View>
         <Input
@@ -84,6 +92,7 @@ export default function EmailScreen() {
           onPress={handleGoogle}
           variant="outline"
           disabled={oauthLoading}
+          icon={<Ionicons name="logo-google" size={18} color="#DB4437" />}
         />
       </ScrollView>
     </KeyboardAvoidingView>

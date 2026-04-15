@@ -1,10 +1,11 @@
 // Firebase client — khoi tao app va auth provider
-import { initializeApp, getApps } from "firebase/app";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getApps, initializeApp } from "firebase/app";
 import {
-  getAuth,
-  getReactNativePersistence,
-  initializeAuth,
+    type Auth,
+    getAuth,
+    getReactNativePersistence,
+    initializeAuth,
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -18,7 +19,7 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
-let firebaseAuth;
+let firebaseAuth: Auth;
 
 try {
   firebaseAuth = initializeAuth(app, {

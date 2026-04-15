@@ -254,11 +254,16 @@ Bảng dưới đây ánh xạ các FR quan trọng tới các bảng, query, mu
 | FR-ISS-06 | `issues` | `UpdateIssue` |
 | FR-ISS-07 | `issues` | `DeleteIssue` |
 | FR-ISS-08 | `issues` | `UpdateIssueStatus` |
-| FR-CMT-01, 02, 03 | `comments` | *(dự kiến: `CreateComment`, `ListCommentsByIdea`, `DeleteComment`)* |
-| FR-COL-01, 02, 03 | `ideas`, `notifications` | `GetIdea`, `UpdateIdea` (thêm vào `collaboratorIds`), insert `notifications` |
-| FR-MSG-01, 02, 03, 04 | `conversations`, `messages` | *(dự kiến: `CreateConversation`, `SendMessage`, `ListMyConversations`, `ListMessagesByConversation`)* |
-| FR-NTF-01, 02, 03 | `notifications` | *(dự kiến: `ListMyNotifications`, `MarkNotificationRead`)* |
+| FR-CMT-01, 02, 03 | `comments` | `CreateComment` (transaction), `ListCommentsByIdea`, `DeleteComment` |
+| FR-COL-02 | `notifications` | `CreateNotification` (type = COLLAB_REQUEST) |
+| FR-COL-03 | `ideas`, `notifications` | `GetIdea`, `UpdateIdea` (collaboratorIds), `CreateNotification` (type = COLLAB_ACCEPTED) |
+| FR-MSG-01 | `conversations` | `CreateConversation`, `ListMyConversations` (dedup check) |
+| FR-MSG-02 | `messages`, `conversations` | `SendMessage` (transaction) |
+| FR-MSG-03 | `conversations` | `ListMyConversations` |
+| FR-MSG-04 | `messages` | `ListMessagesByConversation` |
+| FR-NTF-01 | `notifications` | `CreateNotification` |
+| FR-NTF-02 | `notifications` | `ListMyNotifications` |
+| FR-NTF-03 | `notifications` | `MarkNotificationRead` |
+| FR-NTF-04 | `notifications` | `CountUnreadNotifications` |
 | FR-FED-01 | `issues` | `ListOpenIssues` |
 | FR-LKP-01, 02 | `tags`, `skills` | `ListTags`, `ListSkills` |
-
-> Các query/mutation **(dự kiến)** chưa được hiện thực trong file `.gql` hiện tại — sẽ được bổ sung ở milestone M4.

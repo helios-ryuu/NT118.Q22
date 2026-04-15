@@ -1,11 +1,12 @@
 import { useCallback } from "react";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, RefreshControl, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { useQuery } from "@tanstack/react-query";
 import { listMyIdeas } from "@dataconnect/generated";
 import { IdeaCard } from "@/components/IdeaCard";
+import { FAB } from "@/components/FAB";
 import { queryKeys } from "@/services/queryKeys";
 import { useAuth } from "@/hooks/useAuth";
 import type { Idea } from "@/types/idea";
@@ -26,6 +27,7 @@ export default function IdeasScreen() {
         description: i.description,
         status: i.status,
         tagIds: i.tagIds ?? [],
+        collaboratorIds: i.collaboratorIds ?? [],
         lastActivityAt: i.lastActivityAt,
         createdAt: i.createdAt,
         authorId: i.author.id,
@@ -52,13 +54,7 @@ export default function IdeasScreen() {
         ListHeaderComponent={<Text className="text-2xl font-lx-bold text-foreground mb-4">Ý tưởng của tôi</Text>}
         ListEmptyComponent={<Text className="text-center text-muted font-lx text-base mt-8">Chưa có ý tưởng nào. Nhấn + để tạo mới.</Text>}
       />
-      <Pressable
-        className="absolute bg-primary justify-center items-center rounded-full"
-        style={{ right: 20, bottom: 32, width: 56, height: 56, elevation: 4, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 }}
-        onPress={() => router.push("/idea/create")}
-      >
-        <Text className="text-white" style={{ fontSize: 28, lineHeight: 32 }}>+</Text>
-      </Pressable>
+      <FAB onPress={() => router.push("/idea/create")} />
     </SafeAreaView>
   );
 }

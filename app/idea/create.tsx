@@ -21,6 +21,10 @@ export default function CreateIdeaScreen() {
       Alert.alert("Lỗi", "Vui lòng nhập tiêu đề ý tưởng");
       return;
     }
+    if (!description.trim()) {
+      Alert.alert("Lỗi", "Vui lòng nhập mô tả ý tưởng");
+      return;
+    }
     setLoading(true);
     try {
       await createIdea({
@@ -54,7 +58,7 @@ export default function CreateIdeaScreen() {
           placeholder="Mô tả chi tiết ý tưởng..."
           multiline
           numberOfLines={4}
-          style={{ height: 100, textAlignVertical: "top" }}
+          style={{ height: 120, textAlignVertical: "top" }}
         />
         <TagSelect selected={tagIds} onChange={setTagIds} />
         <Button title={loading ? "Đang tạo..." : "Tạo ý tưởng"} onPress={submit} disabled={loading} />
